@@ -137,14 +137,18 @@ img {
     margin: 0 auto;
     width: auto;
     height: 30px;
-    border-radius: 50%;
+    border-radius: 50px;
     position: relative;
 }
 
-.contorno_descrizione {
-    border-radius: 50px;
-    border: solid 10px coral;
+.universitaTS
+{
+    display: block;
+    margin: 0 auto;
     width: auto;
+    height: 30px;
+    border-radius: 5px;
+    position: relative;
 }
 
 .bottone {
@@ -157,4 +161,17 @@ img {
 {
     background-color: white;
     border: solid 10px white;
+}
+
+.bottoneuniversitaTS
+{
+    background-color: white;
+    border: solid 10px white;
+    border-radius: 50px;
+}
+
+.bottoneuniversitaTS:hover
+{
+    background-color: black;
+    border: solid black 10px;
 }
