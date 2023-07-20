@@ -151,6 +151,16 @@ img {
     position: relative;
 }
 
+.ItsAltoAdriatico
+{
+    display: block;
+    margin: 0 auto;
+    width: auto;
+    height: 30px;
+    border-radius: 5px;
+    position: relative;
+}
+
 .bottone {
     background-color: black;
     border-radius: 50px;
@@ -163,7 +173,7 @@ img {
     border: solid 10px white;
 }
 
-.bottoneuniversitaTS
+.bottoneuniversitaTS , .bottoneItsAltoAdriatico
 {
     background-color: white;
     border: solid 10px white;
@@ -172,6 +182,12 @@ img {
 
 .bottoneuniversitaTS:hover
 {
-    background-color: black;
-    border: solid black 10px;
+    background-color: blue;
+    border: solid blue 10px;
+}
+
+.bottoneItsAltoAdriatico:hover
+{
+    background-color: red;
+    border: solid red 10px;
 }

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         currentMonth.textContent = `${getMonthName(month)} ${year}`;
 
-        let cells = "<tr> <td class='titolo'> Domenica </td> <td class='titolo'> Lunedì </td>  <td class='titolo'> Martedì </td> <td class='titolo'> Mercoledì </td> <td class='titolo'> Giovedì </td> <td class='titolo'> Venerdì </td> <td class='titolo'> Sabato </td>";
+        let cells = "<tr> <td class='titolo'> Domenica </td> <td class='titolo'> Lunedi </td>  <td class='titolo'> Martedi </td> <td class='titolo'> Mercoledi </td> <td class='titolo'> Giovedi </td> <td class='titolo'> Venerdi </td> <td class='titolo'> Sabato </td>";
 
         cells += "<tr>";
         for (let i = 0; i < firstDay; i++) {
