@@ -1,60 +1,131 @@
+h1 {
+    color: red;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px yellow;
+    font-family: 'Delicious Handrawn', cursive;
+}
+
+p {
+    color: red;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px yellow;
+    font-family: 'Delicious Handrawn', cursive;
+}
+
+button {
+    color: blue;
+    text-align: center;
+    background-color: yellow;
+    border-radius: 50px;
+    border: solid yellow 10px;
+    margin-bottom: 20px;
+}
+
 button:hover {
     background-color: aqua;
     border: solid aqua 10px;
+}
+
+.bottone {
+    background-color: black;
+    border-radius: 50px;
+    border: solid black 5px;
+}
+
+.bottone:hover {
+    background-color: white;
+    border: solid 5px white;
+}
+
+img {
+    display: block;
+    margin: 0 auto;
+    width: auto;
+    height: 30px;
+    border-radius: 50px;
+    position: relative;
+}
+
+
+.bottoneuniversitaTS,
+.bottoneItsAltoAdriatico {
+    background-color: white;
+    border: solid 5px white;
+    border-radius: 50px;
+}
+
+.bottoneuniversitaTS:hover {
+    background-color: blue;
+    border: solid blue 5px;
+}
+
+.universitaTS {
+    display: block;
+    margin: 0 auto;
+    width: auto;
+    height: 30px;
+    border-radius: 5px;
+    position: relative;
+}
+
+
+.bottoneItsAltoAdriatico:hover {
+    background-color: red;
+    border: solid red 5px;
+}
+
+.ItsAltoAdriatico {
+    display: block;
+    margin: 0 auto;
+    width: auto;
+    height: 30px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.titolo {
+    font-weight: bold;
+    font-size: 65px;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    font-family: 'Delicious Handrawn', cursive;
+}
+
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+
+.calendar-table th,
+.calendar-table td {
+    border: solid 5px blue;
+    text-align: center;
+    text-shadow: 2px 2px 4px orchid;
 }
 
 td:hover {
     background-color: aqua;
 }
 
-.titolo {
-    font-weight: bold;
-    font-size: 65px;
-    ;
-    color: white;
-    text-shadow: 2px 2px 4px black;
-    font-family: 'Delicious Handrawn', cursive;
-}
-
 @media all and (max-width: 1024px) {
 
     h1 {
-        color: red;
         font-size: 150px;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px yellow;
-        font-family: 'Delicious Handrawn', cursive;
-    }
-
-    .calendar-table {
-        width: 100%;
-        border-collapse: collapse;
     }
 
     .calendar-table th,
     .calendar-table td {
         padding: 27px;
-        text-align: center;
         font-size: 44px;
-        border: solid 5px blue;
-        text-shadow: 2px 2px 4px orchid;
     }
 
     button {
-        color: blue;
-        text-align: center;
         font-size: 80px;
-        border-radius: 50px;
-        background-color: yellow;
-        border-radius: 50px;
-        border: solid yellow 10px;
     }
 
     p {
-        color: red;
         font-size: 90px;
-        text-shadow: 2px 2px 4px yellow;
-        font-family: 'Delicious Handrawn', cursive;
     }
 }
 
@@ -62,41 +133,22 @@ td:hover {
 
     h1 {
         text-align: center;
-        color: red;
         font-size: 60px;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px yellow;
-        font-family: 'Delicious Handrawn', cursive;
-    }
-
-    .calendar-table {
-        width: 100%;
-        border-collapse: collapse;
     }
 
     .calendar-table th,
     .calendar-table td {
         padding: 10px;
-        text-align: center;
         font-size: 30px;
-        border: solid 5px blue;
     }
 
     button {
-        color: blue;
-        text-align: center;
         font-size: 40px;
-        border-radius: 50px;
-        background-color: yellow;
-        border-radius: 50px;
-        border: solid yellow 10px;
     }
 
     p {
-        color: red;
         font-size: 50px;
-        text-shadow: 2px 2px 4px yellow;
-        font-family: 'Delicious Handrawn', cursive;
+        text-align: center;
     }
 }
 
@@ -121,73 +173,4 @@ tr:nth-child(-n + 1) {
 
 body {
     background: linear-gradient(#79E0EE, #B1AFFF, #79E0EE);
-}
-
-p {
-    text-align: center;
-    font-weight: bold;
-}
-
-button {
-    margin-bottom: 20px;
-}
-
-img {
-    display: block;
-    margin: 0 auto;
-    width: auto;
-    height: 30px;
-    border-radius: 50px;
-    position: relative;
-}
-
-.universitaTS
-{
-    display: block;
-    margin: 0 auto;
-    width: auto;
-    height: 30px;
-    border-radius: 5px;
-    position: relative;
-}
-
-.ItsAltoAdriatico
-{
-    display: block;
-    margin: 0 auto;
-    width: auto;
-    height: 30px;
-    border-radius: 5px;
-    position: relative;
-}
-
-.bottone {
-    background-color: black;
-    border-radius: 50px;
-    border: solid black 10px;
-}
-
-.bottone:hover
-{
-    background-color: white;
-    border: solid 10px white;
-}
-
-.bottoneuniversitaTS , .bottoneItsAltoAdriatico
-{
-    background-color: white;
-    border: solid 10px white;
-    border-radius: 50px;
-}
-
-.bottoneuniversitaTS:hover
-{
-    background-color: blue;
-    border: solid blue 10px;
-}
-
-.bottoneItsAltoAdriatico:hover
-{
-    background-color: red;
-    border: solid red 10px;
 }
