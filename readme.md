@@ -8,6 +8,8 @@
 
 pui aggiungere un evento al giorno e se è già agginto clicci e lo pui eliminare e lo reinserisci
 
+se hai inserito l'impegno viene visualizzato sotoo
+
 Alla fine i dati non vengono tenuti in memoria quindi se vuoi riocrdarti ricordati di fare uno screenshot </p>
 
 <br>
