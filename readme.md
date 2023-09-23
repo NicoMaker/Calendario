@@ -8,14 +8,14 @@
 
 pui aggiungere un evento al giorno e se è già agginto clicci e lo pui eliminare e lo reinserisci
 
-se hai inserito l'impegno viene visualizzato sotoo
+se hai inserito l'impegno viene visualizzato sotto
 
 Alla fine i dati non vengono tenuti in memoria quindi se vuoi riocrdarti ricordati di fare uno screenshot </p>
 
 <br>
 <h1> Riferimenti </h1>
 
-<p> con i collegamenti sopra nel sito il simbolo di github (gattino) vai avedere il codice , il simbolo del universita di Trieste vai nella pagina dell'università di Trieste e il simbolo dell'ITS Alto Adriatco vai dentro il sito dell'ITS Alto Adriatico </p>
+<p> con i collegamenti sopra nel sito il simbolo di github (gattino) vai a vedere il codice , il simbolo dell'universita di Trieste vai nella pagina dell'università di Trieste e il simbolo dell'ITS Alto Adriatco vai dentro il sito dell'ITS Alto Adriatico </p>
 
 <img src="foto sito/GitHub.jpg">
 
