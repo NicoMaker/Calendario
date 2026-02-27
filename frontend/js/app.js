@@ -469,10 +469,18 @@ function renderWeek() {
     const evHtml = dayEvents.length
       ? dayEvents.map(e => {
           const color = getEventColor(e);
-          const time = e.start_time ? `${e.start_time}` : '';
+          const time = e.start_time ? `${e.start_time}${e.end_time ? ' – '+e.end_time : ''}` : '';
           return `<div class="week-event-item" style="background:${color}" data-id="${e.id}">
-            ${e.category_icon || '📌'} <strong>${e.title}</strong>
-            ${time ? `<span style="opacity:.7;margin-left:6px">${time}</span>` : ''}
+            <div class="week-event-top">
+              <span>${e.category_icon || '📌'}</span>
+              <strong style="flex:1">${e.title}</strong>
+              ${time ? `<span style="opacity:.7;font-size:10px">${time}</span>` : ''}
+            </div>
+            ${e.description ? `<div style="font-size:10px;opacity:.8;font-style:italic;margin-top:3px">${e.description}</div>` : ''}
+            <div class="week-event-actions">
+              <button class="btn-week-edit" data-id="${e.id}">✏ Modifica</button>
+              <button class="btn-week-delete" data-id="${e.id}">🗑 Elimina</button>
+            </div>
           </div>`;
         }).join('')
       : '<div class="week-empty">Nessun evento</div>';
@@ -491,11 +499,17 @@ function renderWeek() {
       setView('day');
     });
 
-    row.querySelectorAll('.week-event-item').forEach(item => {
-      item.addEventListener('click', e => {
+    row.querySelectorAll('.btn-week-edit').forEach(btn => {
+      btn.addEventListener('click', e => {
         e.stopPropagation();
-        const event = (state.searchResults || state.events).find(ev => ev.id == item.dataset.id);
-        if (event) showEventPopup(event, item);
+        const event = (state.searchResults || state.events).find(ev => ev.id == btn.dataset.id);
+        if (event) openEditEventModal(event);
+      });
+    });
+    row.querySelectorAll('.btn-week-delete').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
       });
     });
     body.appendChild(row);
@@ -556,7 +570,11 @@ function renderDay() {
                 ${e.location ? `<span>📍 ${e.location}</span>` : ''}
                 ${e.category_name ? `<span style="color:${color}">${e.category_name}</span>` : ''}
               </div>
-              ${e.description ? `<div style="font-size:12px;color:var(--text-light);margin-top:6px;font-style:italic">${e.description}</div>` : ''}
+              ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ''}
+              <div class="event-actions">
+                <button class="btn-event-edit" data-id="${e.id}">✏ Modifica</button>
+                <button class="btn-event-delete" data-id="${e.id}">🗑 Elimina</button>
+              </div>
             </div>
           </div>
         </div>
@@ -566,6 +584,19 @@ function renderDay() {
 
   timeline.innerHTML = html;
 
+  timeline.querySelectorAll('.btn-event-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const event = (state.searchResults || state.events).find(ev => ev.id == btn.dataset.id);
+      if (event) openEditEventModal(event);
+    });
+  });
+  timeline.querySelectorAll('.btn-event-delete').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
+    });
+  });
   timeline.querySelectorAll('.day-event-card').forEach(card => {
     card.addEventListener('click', () => {
       const event = (state.searchResults || state.events).find(ev => ev.id == card.dataset.id);
@@ -610,18 +641,25 @@ function renderList() {
         const dow = DAYS_SHORT[(d.getDay()+6)%7];
         return `
           <div class="list-event" data-id="${e.id}">
-            <div class="list-event-date">
-              <span class="list-day-num">${d.getDate()}</span>
-              <span class="list-day-name">${dow}</span>
-            </div>
-            <div class="list-event-bar" style="background:${color}"></div>
-            <div class="list-event-content">
-              <div class="list-event-title">${e.title}</div>
-              <div class="list-event-meta">
-                ${e.start_time ? `<span>🕐 ${e.start_time}${e.end_time?'–'+e.end_time:''}</span>` : ''}
-                ${e.category_name ? `<span>${e.category_icon} ${e.category_name}</span>` : ''}
-                ${e.location ? `<span>📍 ${e.location}</span>` : ''}
+            <div class="list-event-top">
+              <div class="list-event-date">
+                <span class="list-day-num">${d.getDate()}</span>
+                <span class="list-day-name">${dow}</span>
               </div>
+              <div class="list-event-bar" style="background:${color}"></div>
+              <div class="list-event-content">
+                <div class="list-event-title">${e.title}</div>
+                <div class="list-event-meta">
+                  ${e.start_time ? `<span>🕐 ${e.start_time}${e.end_time?' – '+e.end_time:''}</span>` : ''}
+                  ${e.category_name ? `<span>${e.category_icon} ${e.category_name}</span>` : ''}
+                  ${e.location ? `<span>📍 ${e.location}</span>` : ''}
+                </div>
+                ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ''}
+              </div>
+            </div>
+            <div class="list-event-actions">
+              <button class="btn-event-edit" data-id="${e.id}">✏ Modifica</button>
+              <button class="btn-event-delete" data-id="${e.id}">🗑 Elimina</button>
             </div>
           </div>
         `;
@@ -629,10 +667,17 @@ function renderList() {
     </div>
   `).join('');
 
-  container.querySelectorAll('.list-event').forEach(item => {
-    item.addEventListener('click', () => {
-      const event = src.find(e => e.id == item.dataset.id);
-      if (event) showEventPopup(event, item);
+  container.querySelectorAll('.btn-event-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const event = src.find(ev => ev.id == btn.dataset.id);
+      if (event) openEditEventModal(event);
+    });
+  });
+  container.querySelectorAll('.btn-event-delete').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
     });
   });
 }
@@ -792,13 +837,14 @@ async function saveEvent() {
   }
 }
 
-async function deleteEvent() {
-  const id = document.getElementById('eventId').value;
-  if (!id || !confirm('Eliminare questo evento?')) return;
+async function deleteEvent(directId) {
+  const id = directId || document.getElementById('eventId').value;
+  if (!id) return;
+  if (!directId && !confirm('Eliminare questo evento?')) return;
   const resp = await api('DELETE', `/events/${id}`);
   if (resp.success) {
     showToast('🗑 Evento eliminato');
-    closeModal();
+    if (!directId) closeModal();
     await refresh();
   }
 }
