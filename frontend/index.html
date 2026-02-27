@@ -17,6 +17,7 @@
         <span class="logo-icon">◈</span>
         <span class="logo-text">Planner</span>
       </div>
+      <button class="sidebar-close-btn" id="btnSidebarClose" aria-label="Chiudi menu">✕</button>
     </div>
 
     <div class="mini-cal" id="miniCal"></div>
@@ -178,10 +179,8 @@
                 <option value="">Nessuna</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Colore evento</label>
-              <input type="color" id="fColor" value="#4f46e5">
-            </div>
+            <!-- colore gestito automaticamente dalla categoria -->
+            <input type="hidden" id="fColor" value="#ffffff">
           </div>
 
           <div class="form-group">

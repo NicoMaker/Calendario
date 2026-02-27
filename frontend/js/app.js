@@ -704,11 +704,12 @@ function openNewEventModal(dateStr = null) {
 }
 
 function syncColorFromCategory(catId) {
-  if (!catId) return;
-  const cat = state.categories.find(c => String(c.id) === String(catId));
-  if (cat && cat.color) {
-    document.getElementById('fColor').value = cat.color;
+  if (!catId) {
+    document.getElementById('fColor').value = '#ffffff';
+    return;
   }
+  const cat = state.categories.find(c => String(c.id) === String(catId));
+  document.getElementById('fColor').value = (cat && cat.color) ? cat.color : '#ffffff';
 }
 
 function openEditEventModal(event) {
@@ -725,7 +726,7 @@ function openEditEventModal(event) {
   document.getElementById('fCategory').value = event.category_id || '';
   // Usa il colore specifico dell'evento se esiste, altrimenti prende quello della categoria
   if (event.color && event.color !== '#4f46e5') {
-    document.getElementById('fColor').value = event.color;
+    document.getElementById('fColor').value = event.color || '#ffffff';
   } else {
     syncColorFromCategory(event.category_id);
   }
@@ -743,7 +744,7 @@ function closeModal() {
 function resetForm() {
   document.getElementById('eventForm').reset();
   document.getElementById('eventId').value = '';
-  document.getElementById('fColor').value = '#4f46e5';
+  document.getElementById('fColor').value = '#ffffff';
   document.getElementById('timeRow').style.display = '';
   document.getElementById('endTimeHint').textContent = '';
 }
@@ -1061,6 +1062,9 @@ setupTimeInputs();
   });
 
   overlay.addEventListener('click', closeDrawer);
+
+  const closeBtn = document.getElementById('btnSidebarClose');
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
 
   sidebar.addEventListener('click', e => {
     if (window.innerWidth > 768) return;
