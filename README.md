@@ -1,4 +1,4 @@
-# 🗓️ Calendario — Planner Personale v2
+# 🗓️ Calendario — Planner Personale
 
 Applicazione calendario con **Node.js 22 + Express + SQLite nativo**.
 
