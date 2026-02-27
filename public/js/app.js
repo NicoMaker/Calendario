@@ -278,20 +278,35 @@ function renderCategoryList() {
         <span class="cat-dot" style="background:${c.color}"></span>
         <span class="cat-name">${c.icon} ${c.name}</span>
         <span class="cat-count">${c.event_count}</span>
+        <button class="cat-edit-btn" data-cat-id="${c.id}" title="Modifica">✏</button>
       </li>
     `).join('')}
   `;
 
+  // Click su item → filtra
   list.querySelectorAll('.category-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', e => {
+      if (e.target.closest('.cat-edit-btn')) return; // gestito sotto
       state.selectedCategoryFilter = item.dataset.id || null;
       refresh();
     });
   });
 
+  // Click su bottone edit → apri modal categoria
+  list.querySelectorAll('.cat-edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cat = state.categories.find(c => c.id == btn.dataset.catId);
+      if (cat) openCatModal(cat);
+    });
+  });
+
+  // Popola select nel modal evento
   const select = document.getElementById('fCategory');
+  const prevVal = select.value;
   select.innerHTML = `<option value="">Nessuna</option>` +
     state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  if (prevVal) select.value = prevVal; // mantieni selezione
 }
 
 // ──────────────── MONTH VIEW ────────────────
@@ -948,4 +963,155 @@ setupTimeInputs();
 (async () => {
   await refresh();
   console.log('🗓️ Calendario caricato!');
+})();
+
+// ══════════════════════════════════════════════
+//  GESTIONE CATEGORIE — modal crea/modifica/elimina
+// ══════════════════════════════════════════════
+
+const EMOJI_LIST = [
+  '📌','💼','🌿','👨‍👩‍👧','🏥','⚽','✈️','🎂','📚','🎵',
+  '🏠','🍕','💪','🧘','🎨','💡','📝','🚗','🛒','🎬',
+  '📅','🔔','💊','🌙','☀️','🎯','🏆','💰','🌱','🤝',
+  '🎉','🐶','🏋️','🎸','📷','🧹','💻','🛫','⚽','🎂',
+];
+
+function openCatModal(cat = null) {
+  document.getElementById('catModalTitle').textContent = cat ? 'Modifica Categoria' : 'Nuova Categoria';
+  document.getElementById('catId').value   = cat ? cat.id : '';
+  document.getElementById('cName').value  = cat ? cat.name  : '';
+  document.getElementById('cColor').value = cat ? cat.color : '#6366f1';
+  document.getElementById('cIcon').value  = cat ? cat.icon  : '📌';
+  document.getElementById('btnDeleteCat').classList.toggle('hidden', !cat);
+
+  updateCatPreview();
+  buildEmojiGrid(cat ? cat.icon : '📌');
+
+  document.getElementById('catModalOverlay').classList.remove('hidden');
+  document.getElementById('cName').focus();
+}
+
+function closeCatModal() {
+  document.getElementById('catModalOverlay').classList.add('hidden');
+}
+
+function buildEmojiGrid(selected = '📌') {
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = EMOJI_LIST.map(e => `
+    <button type="button" class="emoji-btn ${e === selected ? 'selected' : ''}" data-emoji="${e}">${e}</button>
+  `).join('');
+
+  grid.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('cIcon').value = btn.dataset.emoji;
+      grid.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateCatPreview();
+    });
+  });
+}
+
+function updateCatPreview() {
+  const name  = document.getElementById('cName').value  || 'Anteprima';
+  const color = document.getElementById('cColor').value || '#6366f1';
+  const icon  = document.getElementById('cIcon').value  || '📌';
+  document.getElementById('catPreviewDot').style.background = color;
+  document.getElementById('catPreviewIcon').textContent = icon;
+  document.getElementById('catPreviewName').textContent = name;
+}
+
+async function saveCat() {
+  const id    = document.getElementById('catId').value;
+  const name  = document.getElementById('cName').value.trim();
+  const color = document.getElementById('cColor').value;
+  const icon  = document.getElementById('cIcon').value.trim() || '📌';
+
+  if (!name) { showToast('⚠️ Inserisci un nome per la categoria!'); return; }
+
+  const body = { name, color, icon };
+  const resp = id
+    ? await api('PUT',  `/categories/${id}`, body)
+    : await api('POST', '/categories',        body);
+
+  if (resp.success) {
+    showToast(id ? '✅ Categoria aggiornata!' : '✅ Categoria creata!');
+    closeCatModal();
+    await refresh();
+
+    // Se eravamo nel modal evento, aggiorna la select e preseleziona la nuova cat
+    if (!document.getElementById('modalOverlay').classList.contains('hidden')) {
+      await loadCategories();
+      if (!id) {
+        // preseleziona la nuova categoria appena creata
+        document.getElementById('fCategory').value = resp.data.id;
+      }
+    }
+  } else {
+    showToast('❌ ' + resp.error);
+  }
+}
+
+async function deleteCat() {
+  const id   = document.getElementById('catId').value;
+  const name = document.getElementById('cName').value;
+  if (!id) return;
+  if (!confirm(`Eliminare la categoria "${name}"?\nGli eventi associati rimarranno senza categoria.`)) return;
+
+  const resp = await api('DELETE', `/categories/${id}`);
+  if (resp.success) {
+    showToast('🗑 Categoria eliminata');
+    closeCatModal();
+    await refresh();
+  } else {
+    showToast('❌ ' + resp.error);
+  }
+}
+
+// Event listeners categorie
+document.getElementById('btnAddCategory').addEventListener('click', () => openCatModal());
+document.getElementById('catModalClose').addEventListener('click', closeCatModal);
+document.getElementById('btnCatCancel').addEventListener('click', closeCatModal);
+document.getElementById('btnSaveCat').addEventListener('click', saveCat);
+document.getElementById('btnDeleteCat').addEventListener('click', deleteCat);
+
+// Preview live su input
+document.getElementById('cName').addEventListener('input',  updateCatPreview);
+document.getElementById('cColor').addEventListener('input', updateCatPreview);
+document.getElementById('cIcon').addEventListener('input',  updateCatPreview);
+
+// Chiudi modal cat cliccando fuori
+document.getElementById('catModalOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeCatModal();
+});
+
+// Pulsante "+ nuova" dentro modal evento → apri modal categoria senza chiudere l'evento
+document.getElementById('btnQuickAddCat').addEventListener('click', () => openCatModal());
+
+// ══════════════════════════════════════════════
+//  SOCKET.IO — aggiornamenti real-time
+// ══════════════════════════════════════════════
+(function initSocket() {
+  // socket.io-client viene servito automaticamente da socket.io su /socket.io/socket.io.js
+  const script = document.createElement("script");
+  script.src = "/socket.io/socket.io.js";
+  script.onload = () => {
+    const socket = io();
+
+    socket.on("connect", () => {
+      console.log("🔌 Socket.IO connesso:", socket.id);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.warn("🔌 Socket.IO disconnesso:", reason);
+    });
+
+    // Aggiorna calendario quando un altro client crea/modifica/elimina
+    socket.on("event:created",  () => refresh());
+    socket.on("event:updated",  () => refresh());
+    socket.on("event:deleted",  () => refresh());
+    socket.on("category:created", () => { refresh(); loadCategories(); });
+    socket.on("category:updated", () => { refresh(); loadCategories(); });
+    socket.on("category:deleted", () => { refresh(); loadCategories(); });
+  };
+  document.head.appendChild(script);
 })();

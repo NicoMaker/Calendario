@@ -1,11 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router  = express.Router();
 
-// node:sqlite restituisce oggetti null-prototype → convertiamo in plain object
-const plain = rows => JSON.parse(JSON.stringify(rows));
+const plain = (rows) => JSON.parse(JSON.stringify(rows));
 
 // GET /api/events
-router.get('/', (req, res) => {
+router.get("/", (req, res) => {
   const db = req.app.locals.db;
   const { month, year, category_id, search } = req.query;
 
@@ -19,7 +18,7 @@ router.get('/', (req, res) => {
 
   if (month && year) {
     query += ` AND strftime('%m', e.start_date) = ? AND strftime('%Y', e.start_date) = ?`;
-    params.push(String(month).padStart(2, '0'), String(year));
+    params.push(String(month).padStart(2, "0"), String(year));
   } else if (year) {
     query += ` AND strftime('%Y', e.start_date) = ?`;
     params.push(String(year));
@@ -39,8 +38,7 @@ router.get('/', (req, res) => {
   query += ` ORDER BY e.start_date ASC, COALESCE(e.start_time,'99:99') ASC`;
 
   try {
-    const stmt = db.prepare(query);
-    const events = plain(params.length ? stmt.all(...params) : stmt.all());
+    const events = plain(params.length ? db.prepare(query).all(...params) : db.prepare(query).all());
     res.json({ success: true, data: events, count: events.length });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -48,7 +46,7 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/events/:id
-router.get('/:id', (req, res) => {
+router.get("/:id", (req, res) => {
   const db = req.app.locals.db;
   try {
     const event = plain(db.prepare(`
@@ -56,7 +54,7 @@ router.get('/:id', (req, res) => {
       FROM events e LEFT JOIN categories c ON e.category_id = c.id
       WHERE e.id = ?
     `).get(Number(req.params.id)));
-    if (!event) return res.status(404).json({ success: false, error: 'Evento non trovato' });
+    if (!event) return res.status(404).json({ success: false, error: "Evento non trovato" });
     res.json({ success: true, data: event });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -64,16 +62,25 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/events
-router.post('/', (req, res) => {
+router.post("/", (req, res) => {
   const db = req.app.locals.db;
+  const io = req.app.get("io");
   const { title, description, start_date, end_date, start_time, end_time, location, category_id, all_day, color } = req.body;
-  if (!title || !start_date) return res.status(400).json({ success: false, error: 'Titolo e data obbligatori' });
+
+  if (!title || !start_date)
+    return res.status(400).json({ success: false, error: "Titolo e data obbligatori" });
+
   try {
     const result = db.prepare(`
       INSERT INTO events (title, description, start_date, end_date, start_time, end_time, location, category_id, all_day, color)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(title, description||null, start_date, end_date||null, start_time||null, end_time||null, location||null, category_id||null, all_day?1:0, color||null);
-    const newEvent = plain(db.prepare('SELECT * FROM events WHERE id = ?').get(result.lastInsertRowid));
+
+    const newEvent = plain(db.prepare("SELECT * FROM events WHERE id = ?").get(result.lastInsertRowid));
+
+    // Notifica real-time tutti i client connessi
+    io.emit("event:created", newEvent);
+
     res.status(201).json({ success: true, data: newEvent });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -81,11 +88,14 @@ router.post('/', (req, res) => {
 });
 
 // PUT /api/events/:id
-router.put('/:id', (req, res) => {
+router.put("/:id", (req, res) => {
   const db = req.app.locals.db;
+  const io = req.app.get("io");
   const { title, description, start_date, end_date, start_time, end_time, location, category_id, all_day, color } = req.body;
-  const existing = db.prepare('SELECT id FROM events WHERE id = ?').get(Number(req.params.id));
-  if (!existing) return res.status(404).json({ success: false, error: 'Evento non trovato' });
+
+  const existing = db.prepare("SELECT id FROM events WHERE id = ?").get(Number(req.params.id));
+  if (!existing) return res.status(404).json({ success: false, error: "Evento non trovato" });
+
   try {
     db.prepare(`
       UPDATE events SET title=?, description=?, start_date=?, end_date=?,
@@ -93,7 +103,11 @@ router.put('/:id', (req, res) => {
         all_day=?, color=?, updated_at=CURRENT_TIMESTAMP
       WHERE id=?
     `).run(title, description||null, start_date, end_date||null, start_time||null, end_time||null, location||null, category_id||null, all_day?1:0, color||null, Number(req.params.id));
-    const updated = plain(db.prepare('SELECT * FROM events WHERE id = ?').get(Number(req.params.id)));
+
+    const updated = plain(db.prepare("SELECT * FROM events WHERE id = ?").get(Number(req.params.id)));
+
+    io.emit("event:updated", updated);
+
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -101,27 +115,17 @@ router.put('/:id', (req, res) => {
 });
 
 // DELETE /api/events/:id
-router.delete('/:id', (req, res) => {
+router.delete("/:id", (req, res) => {
   const db = req.app.locals.db;
-  const result = db.prepare('DELETE FROM events WHERE id = ?').run(Number(req.params.id));
-  if (result.changes === 0) return res.status(404).json({ success: false, error: 'Evento non trovato' });
-  res.json({ success: true, message: 'Evento eliminato' });
-});
+  const io = req.app.get("io");
 
-// GET /api/events/range/:start/:end
-router.get('/range/:start/:end', (req, res) => {
-  const db = req.app.locals.db;
-  try {
-    const events = plain(db.prepare(`
-      SELECT e.*, c.name as category_name, c.color as category_color, c.icon as category_icon
-      FROM events e LEFT JOIN categories c ON e.category_id = c.id
-      WHERE e.start_date BETWEEN ? AND ?
-      ORDER BY e.start_date ASC, COALESCE(e.start_time,'99:99') ASC
-    `).all(req.params.start, req.params.end));
-    res.json({ success: true, data: events });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  const result = db.prepare("DELETE FROM events WHERE id = ?").run(Number(req.params.id));
+  if (result.changes === 0)
+    return res.status(404).json({ success: false, error: "Evento non trovato" });
+
+  io.emit("event:deleted", { id: Number(req.params.id) });
+
+  res.json({ success: true, message: "Evento eliminato" });
 });
 
 module.exports = router;
