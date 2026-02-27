@@ -610,6 +610,18 @@ function showEventPopup(event, anchor) {
   popup.style.top  = `${Math.max(8, top)}px`;
 
   document.getElementById('btnEditEvent').onclick = () => { closePopup(); openEditEventModal(event); };
+
+  document.getElementById('btnDeletePopup').onclick = async () => {
+    if (!confirm(`Eliminare "${event.title}"?`)) return;
+    const resp = await api('DELETE', `/events/${event.id}`);
+    if (resp.success) {
+      closePopup();
+      showToast('🗑 Evento eliminato');
+      await refresh();
+    } else {
+      showToast('❌ ' + resp.error);
+    }
+  };
 }
 
 function closePopup() {

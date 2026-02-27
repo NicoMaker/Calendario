@@ -14,25 +14,20 @@ const categoriesApi    = require("./api/categories");
 const PORT = process.env.PORT || 3000;
 const app  = express();
 
-// ── Crea server HTTP + Socket.IO ──────────────────────────
+// ── HTTP server + Socket.IO ───────────────────
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
+  cors: { origin: "*", methods: ["GET", "POST"], credentials: true },
   transports: ["websocket", "polling"],
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000,
 });
 
-// Rendi io disponibile nelle route
 app.set("io", io);
 
-// ── Middleware ────────────────────────────────────────────
+// ── Middleware ────────────────────────────────
 app.use(cors({
   origin: "*",
   credentials: true,
@@ -44,7 +39,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Log richieste API
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -52,7 +46,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Database ──────────────────────────────────────────────
+// ── Database ──────────────────────────────────
 console.log("🗄️  Inizializzazione database...");
 const db = initDB();
 
@@ -65,12 +59,12 @@ if (process.env.SEED === "true") {
 
 app.locals.db = db;
 
-// ── Routes ────────────────────────────────────────────────
-app.use("/",                pageRoutes);
-app.use("/api/events",      eventsApi);
-app.use("/api/categories",  categoriesApi);
+// ── Routes ────────────────────────────────────
+app.use("/",               pageRoutes);
+app.use("/api/events",     eventsApi);
+app.use("/api/categories", categoriesApi);
 
-// ── Health check ──────────────────────────────────────────
+// ── Health check ──────────────────────────────
 app.get("/api/health", async (req, res) => {
   const publicIP = await getPublicIP();
   res.json({
@@ -83,15 +77,14 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
-// ── SPA fallback ──────────────────────────────────────────
+// ── SPA fallback ──────────────────────────────
 app.get("*", (req, res) => {
-  if (req.path.startsWith("/api")) {
-    return res.status(404).json({ error: "Endpoint API non trovato" });
-  }
+  if (req.path.startsWith("/api"))
+    return res.status(404).json({ error: "Endpoint non trovato" });
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ── Gestione errori middleware ─────────────────────────────
+// ── Error middleware ──────────────────────────
 app.use((err, req, res, next) => {
   console.error("Errore server:", err.stack);
   res.status(err.status || 500).json({
@@ -100,60 +93,37 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── Socket.IO ─────────────────────────────────────────────
+// ── Socket.IO events ──────────────────────────
 io.on("connection", (socket) => {
-  console.log(`🔌 Client connesso: ${socket.id} da ${socket.handshake.address}`);
-
-  socket.emit("connected", {
-    message: "Connesso al calendario",
-    timestamp: new Date().toISOString(),
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log(`🔌 Client disconnesso: ${socket.id} — ${reason}`);
-  });
-
-  socket.on("error", (error) => {
-    console.error(`Errore Socket.IO (${socket.id}):`, error);
-  });
-
-  socket.on("ping", () => {
-    socket.emit("pong", { timestamp: new Date().toISOString() });
-  });
+  console.log(`🔌 Client connesso: ${socket.id}`);
+  socket.emit("connected", { message: "Connesso al calendario", timestamp: new Date().toISOString() });
+  socket.on("disconnect", (reason) => console.log(`🔌 Client disconnesso: ${socket.id} — ${reason}`));
+  socket.on("ping", () => socket.emit("pong", { timestamp: new Date().toISOString() }));
 });
 
-// ── Utility IP ────────────────────────────────────────────
+// ── IP utilities ──────────────────────────────
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
-      if (iface.family === "IPv4" && !iface.internal) {
-        return iface.address;
-      }
-    }
-  }
+  for (const name of Object.keys(interfaces))
+    for (const iface of interfaces[name])
+      if (iface.family === "IPv4" && !iface.internal) return iface.address;
   return "localhost";
 }
 
 async function getPublicIP() {
   try {
     const https = require("https");
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       https.get("https://api.ipify.org?format=json", (res) => {
         let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try { resolve(JSON.parse(data).ip); }
-          catch (e) { reject(e); }
-        });
-      }).on("error", reject);
+        res.on("data", (c) => (data += c));
+        res.on("end", () => { try { resolve(JSON.parse(data).ip); } catch { resolve(null); } });
+      }).on("error", () => resolve(null));
     });
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-// ── Avvio server ──────────────────────────────────────────
+// ── Avvio server ──────────────────────────────
 server.listen(PORT, "0.0.0.0", async () => {
   const localIP  = getLocalIP();
   const publicIP = await getPublicIP();
@@ -172,26 +142,28 @@ server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(`\n❌ Porta ${PORT} già in uso!`);
     console.error(`   > netstat -ano | findstr :${PORT}`);
-    console.error(`   > taskkill /PID <numero_pid> /F`);
-    console.error(`   Oppure: set PORT=3001 && npm run dev\n`);
+    console.error(`   > taskkill /PID <numero_pid> /F\n`);
   } else {
     console.error("❌ Errore server:", err);
   }
   process.exit(1);
 });
 
-// ── Gestione errori globali ───────────────────────────────
-process.on("uncaughtException", (error) => {
-  console.error("❌ Uncaught Exception:", error);
-});
+// ── Graceful shutdown ─────────────────────────
+let isShuttingDown = false;
 
-process.on("unhandledRejection", (reason) => {
-  console.error("❌ Unhandled Rejection:", reason);
-});
+function gracefulShutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
 
-// ── Graceful shutdown (Ctrl+C) ────────────────────────────
-const gracefulShutdown = (signal) => {
-  console.log(`\n🛑 ${signal} ricevuto — chiusura in corso...`);
+  console.log(`\n🛑 ${signal} — chiusura in corso...`);
+
+  // Forza uscita dopo 5 secondi
+  const forceExit = setTimeout(() => {
+    console.error("⚠️  Timeout — chiusura forzata.");
+    process.exit(1);
+  }, 5000);
+  forceExit.unref(); // non blocca il process loop
 
   server.close(() => {
     console.log("✅ Server HTTP chiuso.");
@@ -199,17 +171,22 @@ const gracefulShutdown = (signal) => {
       console.log("✅ Socket.IO chiuso.");
       try { db.close(); console.log("✅ Database chiuso."); } catch (_) {}
       console.log("👋 Arrivederci!\n");
+      clearTimeout(forceExit);
       process.exit(0);
     });
   });
+}
 
-  setTimeout(() => {
-    console.error("⚠️  Timeout chiusura — forzatura uscita.");
-    process.exit(1);
-  }, 5000);
-};
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT",  () => gracefulShutdown("SIGINT (Ctrl+C)"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+
+// Fix Windows: nodemon manda SIGUSR2 per riavviare
+process.once("SIGUSR2", () => {
+  gracefulShutdown("SIGUSR2 (nodemon restart)");
+});
+
+// Gestione errori globali
+process.on("uncaughtException",  (err)    => console.error("❌ UncaughtException:", err));
+process.on("unhandledRejection", (reason) => console.error("❌ UnhandledRejection:", reason));
 
 module.exports = { app, server, io };

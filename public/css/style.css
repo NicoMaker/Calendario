@@ -980,10 +980,12 @@ body {
 .popup-footer {
   padding: 10px 16px;
   border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
 }
 
 .btn-edit {
-  width: 100%;
+  flex: 1;
   padding: 8px;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -996,6 +998,25 @@ body {
 }
 
 .btn-edit:hover { background: var(--text); color: var(--bg); }
+
+.btn-delete-popup {
+  flex: 1;
+  padding: 8px;
+  background: #fef2f2;
+  border: 1px solid #fcd5d5;
+  border-radius: var(--radius-sm);
+  color: #e05555;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-delete-popup:hover {
+  background: #e05555;
+  border-color: #e05555;
+  color: #fff;
+}
 
 /* ─────────────────── TOAST ─────────────────── */
 .toast {
