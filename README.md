@@ -1,10 +1,5 @@
 # 🗓️ Calendario — Planner Personale
 
-Applicazione calendario con **Node.js 22 + Express + SQLite nativo**.
-
-> ✅ **NESSUNA dipendenza nativa** — niente `better-sqlite3`, niente compilatori C++.  
-> Usa il modulo `node:sqlite` integrato in Node.js 22 (zero problemi su Windows!).
-
 ---
 
 ## 🚀 Installazione rapida
