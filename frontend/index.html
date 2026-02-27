@@ -1,284 +1,334 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calendario — Planner Personale</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <span class="logo-icon">◈</span>
-        <span class="logo-text">Planner</span>
-      </div>
-      <button class="sidebar-close-btn" id="btnSidebarClose" aria-label="Chiudi">✕</button>
-    </div>
-
-    <div class="mini-cal" id="miniCal"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label-row">
-        <p class="sidebar-label">Categorie <span id="catFilterBadge" class="cat-filter-badge hidden"></span></p>
-        <button class="btn-add-cat" id="btnAddCategory" title="Nuova categoria">+</button>
-      </div>
-      <ul class="category-list" id="categoryList"></ul>
-    </div>
-
-    <div class="sidebar-section">
-      <button class="btn-new-event" id="btnNewEvent">
-        <span>+</span> Nuovo evento
-      </button>
-    </div>
-
-    <div class="sidebar-bottom">
-      <div class="view-toggle">
-        <button class="view-btn active" data-view="month">Mese</button>
-        <button class="view-btn" data-view="week">Sett.</button>
-        <button class="view-btn" data-view="day">Giorno</button>
-        <button class="view-btn" data-view="list">Lista</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendario — Planner Personale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">◈</span>
+          <span class="logo-text">Planner</span>
+        </div>
+        <button
+          class="sidebar-close-btn"
+          id="btnSidebarClose"
+          aria-label="Chiudi"
+        >
+          ✕
+        </button>
       </div>
 
-      <div class="print-section">
-        <p class="sidebar-label" style="margin-top:18px; margin-bottom:8px">🖨 Stampa</p>
-        <div class="print-controls">
-          <button class="btn-print" id="btnPrintDay">📅 Giorno corrente</button>
-          <button class="btn-print hidden" id="btnPrintSearch">🔍 Risultati ricerca</button>
-          <div class="print-date-row">
-            <input type="date" id="printDatePicker">
-            <button class="btn-print-go" id="btnPrintCustomDay">→</button>
+      <div class="mini-cal" id="miniCal"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label-row">
+          <p class="sidebar-label">
+            Categorie
+            <span id="catFilterBadge" class="cat-filter-badge hidden"></span>
+          </p>
+          <button
+            class="btn-add-cat"
+            id="btnAddCategory"
+            title="Nuova categoria"
+          >
+            +
+          </button>
+        </div>
+        <ul class="category-list" id="categoryList"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <button class="btn-new-event" id="btnNewEvent">
+          <span>+</span> Nuovo evento
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="month">Mese</button>
+          <button class="view-btn" data-view="week">Sett.</button>
+          <button class="view-btn" data-view="day">Giorno</button>
+          <button class="view-btn" data-view="list">Lista</button>
+        </div>
+
+        <div class="print-section">
+          <p class="sidebar-label" style="margin-top: 18px; margin-bottom: 8px">
+            🖨 Stampa
+          </p>
+          <div class="print-controls">
+            <button class="btn-print" id="btnPrintDay">
+              📅 Giorno corrente
+            </button>
+            <button class="btn-print hidden" id="btnPrintSearch">
+              🔍 Risultati ricerca
+            </button>
+            <div class="print-date-row">
+              <input type="date" id="printDatePicker" />
+              <button class="btn-print-go" id="btnPrintCustomDay">→</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </aside>
+    </aside>
 
-  <!-- MOBILE OVERLAY -->
-  <div class="mobile-overlay hidden" id="mobileOverlay"></div>
+    <!-- MOBILE OVERLAY -->
+    <div class="mobile-overlay hidden" id="mobileOverlay"></div>
 
-  <!-- MAIN CONTENT -->
-  <main class="main">
-    <!-- MOBILE TOP BAR -->
-    <div class="mobile-topbar">
-      <div class="mobile-logo">
-        <span class="logo-icon">◈</span>
-        <span class="logo-text">Planner</span>
-      </div>
-      <button class="mobile-menu-btn" id="btnMobileMenu" aria-label="Apri menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-
-    <header class="main-header">
-      <div class="nav-controls">
-        <button class="nav-btn" id="btnPrev">‹</button>
-        <h1 class="current-period" id="currentPeriod"></h1>
-        <button class="nav-btn" id="btnNext">›</button>
-        <button class="today-btn" id="btnToday">Oggi</button>
-      </div>
-      <div class="header-right">
-        <div class="search-box">
-          <input type="text" placeholder="Cerca eventi..." id="searchInput">
-          <span class="search-icon">⌕</span>
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <!-- MOBILE TOP BAR -->
+      <div class="mobile-topbar">
+        <div class="mobile-logo">
+          <span class="logo-icon">◈</span>
+          <span class="logo-text">Planner</span>
         </div>
-        <div class="search-results-badge hidden" id="searchBadge"></div>
+        <button
+          class="mobile-menu-btn"
+          id="btnMobileMenu"
+          aria-label="Apri menu"
+        >
+          <span></span><span></span><span></span>
+        </button>
       </div>
-    </header>
 
-    <!-- VISTA MESE -->
-    <div class="calendar-grid" id="calendarMonth">
-      <div class="day-labels">
-        <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span>
-        <span>Ven</span><span>Sab</span><span>Dom</span>
+      <header class="main-header">
+        <div class="nav-controls">
+          <button class="nav-btn" id="btnPrev">‹</button>
+          <h1 class="current-period" id="currentPeriod"></h1>
+          <button class="nav-btn" id="btnNext">›</button>
+          <button class="today-btn" id="btnToday">Oggi</button>
+        </div>
+        <div class="header-right">
+          <div class="search-box">
+            <input type="text" placeholder="Cerca eventi..." id="searchInput" />
+            <span class="search-icon">⌕</span>
+          </div>
+          <div class="search-results-badge hidden" id="searchBadge"></div>
+        </div>
+      </header>
+
+      <!-- VISTA MESE -->
+      <div class="calendar-grid" id="calendarMonth">
+        <div class="day-labels">
+          <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span>
+          <span>Ven</span><span>Sab</span><span>Dom</span>
+        </div>
+        <div class="days-grid" id="daysGrid"></div>
       </div>
-      <div class="days-grid" id="daysGrid"></div>
-    </div>
 
-    <!-- VISTA SETTIMANA -->
-    <div class="week-view hidden" id="calendarWeek">
-      <div class="week-body" id="weekBody"></div>
-    </div>
+      <!-- VISTA SETTIMANA -->
+      <div class="week-view hidden" id="calendarWeek">
+        <div class="week-body" id="weekBody"></div>
+      </div>
 
-    <!-- VISTA GIORNO -->
-    <div class="day-view hidden" id="calendarDay">
-      <div class="day-timeline" id="dayTimeline"></div>
-    </div>
+      <!-- VISTA GIORNO -->
+      <div class="day-view hidden" id="calendarDay">
+        <div class="day-timeline" id="dayTimeline"></div>
+      </div>
 
-    <!-- VISTA LISTA -->
-    <div class="list-view hidden" id="calendarList">
-      <div class="list-container" id="listContainer"></div>
-    </div>
-  </main>
+      <!-- VISTA LISTA -->
+      <div class="list-view hidden" id="calendarList">
+        <div class="list-container" id="listContainer"></div>
+      </div>
+    </main>
 
-  <!-- ═══════════════════════════════════════
+    <!-- ═══════════════════════════════════════
        MODAL EVENTO
   ════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="modalOverlay">
-    <div class="modal" id="eventModal">
-      <div class="modal-header">
-        <h2 id="modalTitle">Nuovo Evento</h2>
-        <button class="modal-close" id="modalClose">×</button>
-      </div>
-      <div class="modal-body">
-        <form id="eventForm" onsubmit="return false">
-          <input type="hidden" id="eventId">
+    <div class="modal-overlay hidden" id="modalOverlay">
+      <div class="modal" id="eventModal">
+        <div class="modal-header">
+          <h2 id="modalTitle">Nuovo Evento</h2>
+          <button class="modal-close" id="modalClose">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="eventForm" onsubmit="return false;">
+            <input type="hidden" id="eventId" />
 
-          <div class="form-group">
-            <label>Titolo *</label>
-            <input type="text" id="fTitle" placeholder="Titolo evento..." required>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
-              <label>Data inizio *</label>
-              <input type="date" id="fStartDate" required>
+              <label>Titolo *</label>
+              <input
+                type="text"
+                id="fTitle"
+                placeholder="Titolo evento..."
+                required
+              />
             </div>
-            <div class="form-group">
-              <label>Data fine</label>
-              <input type="date" id="fEndDate">
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Data inizio *</label>
+                <input type="date" id="fStartDate" required />
+              </div>
+              <div class="form-group">
+                <label>Data fine</label>
+                <input type="date" id="fEndDate" />
+              </div>
             </div>
-          </div>
 
-          <div class="form-group toggle-row">
-            <label class="toggle-label">
-              <input type="checkbox" id="fAllDay">
-              <span class="toggle-slider"></span>
-              Tutto il giorno
-            </label>
-          </div>
-
-          <div class="form-row" id="timeRow">
-            <div class="form-group">
-              <label>Ora inizio</label>
-              <input type="time" id="fStartTime">
-              <span class="field-hint" id="startTimeHint"></span>
-            </div>
-            <div class="form-group">
-              <label>Ora fine</label>
-              <input type="time" id="fEndTime">
-              <span class="field-hint" id="endTimeHint"></span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Luogo</label>
-            <input type="text" id="fLocation" placeholder="Dove si svolge?">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Categoria
-                <button type="button" class="btn-inline-link" id="btnQuickAddCat">+ nuova</button>
+            <div class="form-group toggle-row">
+              <label class="toggle-label">
+                <input type="checkbox" id="fAllDay" />
+                <span class="toggle-slider"></span>
+                Tutto il giorno
               </label>
-              <select id="fCategory">
-                <option value="">Nessuna</option>
-              </select>
             </div>
-            <input type="hidden" id="fColor" value="#ffffff">
-          </div>
 
-          <div class="form-group">
-            <label>Note</label>
-            <textarea id="fDescription" placeholder="Aggiungi una nota..." rows="3"></textarea>
+            <div class="form-row" id="timeRow">
+              <div class="form-group">
+                <label>Ora inizio</label>
+                <input type="time" id="fStartTime" />
+                <span class="field-hint" id="startTimeHint"></span>
+              </div>
+              <div class="form-group">
+                <label>Ora fine</label>
+                <input type="time" id="fEndTime" />
+                <span class="field-hint" id="endTimeHint"></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Luogo</label>
+              <input type="text" id="fLocation" placeholder="Dove si svolge?" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label
+                  >Categoria
+                  <button
+                    type="button"
+                    class="btn-inline-link"
+                    id="btnQuickAddCat"
+                  >
+                    + nuova
+                  </button>
+                </label>
+                <select id="fCategory">
+                  <option value="">Nessuna</option>
+                </select>
+              </div>
+              <input type="hidden" id="fColor" value="#ffffff" />
+            </div>
+
+            <div class="form-group">
+              <label>Note</label>
+              <textarea
+                id="fDescription"
+                placeholder="Aggiungi una nota..."
+                rows="3"
+              ></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-danger hidden" id="btnDeleteEvent">Elimina</button>
+          <div class="footer-right">
+            <button class="btn-secondary" id="btnCancel">Annulla</button>
+            <button class="btn-primary" id="btnSaveEvent">Salva evento</button>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-danger hidden" id="btnDeleteEvent">Elimina</button>
-        <div class="footer-right">
-          <button class="btn-secondary" id="btnCancel">Annulla</button>
-          <button class="btn-primary" id="btnSaveEvent">Salva evento</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════
+    <!-- ═══════════════════════════════════════
        MODAL CATEGORIA
   ════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="catModalOverlay">
-    <div class="modal modal-sm" id="catModal">
-      <div class="modal-header">
-        <h2 id="catModalTitle">Nuova Categoria</h2>
-        <button class="modal-close" id="catModalClose">×</button>
-      </div>
-      <div class="modal-body">
-        <form id="catForm" onsubmit="return false">
-          <input type="hidden" id="catId">
+    <div class="modal-overlay hidden" id="catModalOverlay">
+      <div class="modal modal-sm" id="catModal">
+        <div class="modal-header">
+          <h2 id="catModalTitle">Nuova Categoria</h2>
+          <button class="modal-close" id="catModalClose">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="catForm" onsubmit="return false;">
+            <input type="hidden" id="catId" />
 
-          <div class="form-group">
-            <label>Nome *</label>
-            <input type="text" id="cName" placeholder="Es. Studio, Hobby, Sport..." required>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
-              <label>Colore</label>
-              <input type="color" id="cColor" value="#6366f1">
+              <label>Nome *</label>
+              <input
+                type="text"
+                id="cName"
+                placeholder="Es. Studio, Hobby, Sport..."
+                required
+              />
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Colore</label>
+                <input type="color" id="cColor" value="#6366f1" />
+              </div>
+              <div class="form-group">
+                <label>Icona (emoji)</label>
+                <input type="text" id="cIcon" placeholder="📌" maxlength="4" />
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="cat-preview" id="catPreview">
+              <span class="cat-preview-dot" id="catPreviewDot"></span>
+              <span class="cat-preview-icon" id="catPreviewIcon">📌</span>
+              <span class="cat-preview-name" id="catPreviewName"
+                >Anteprima</span
+              >
+            </div>
+
+            <!-- Emoji picker rapido -->
             <div class="form-group">
-              <label>Icona (emoji)</label>
-              <input type="text" id="cIcon" placeholder="📌" maxlength="4">
+              <label>Scegli icona rapida</label>
+              <div class="emoji-grid" id="emojiGrid"></div>
             </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-danger hidden" id="btnDeleteCat">Elimina</button>
+          <div class="footer-right">
+            <button class="btn-secondary" id="btnCatCancel">Annulla</button>
+            <button class="btn-primary" id="btnSaveCat">Salva categoria</button>
           </div>
-
-          <!-- Preview -->
-          <div class="cat-preview" id="catPreview">
-            <span class="cat-preview-dot" id="catPreviewDot"></span>
-            <span class="cat-preview-icon" id="catPreviewIcon">📌</span>
-            <span class="cat-preview-name" id="catPreviewName">Anteprima</span>
-          </div>
-
-          <!-- Emoji picker rapido -->
-          <div class="form-group">
-            <label>Scegli icona rapida</label>
-            <div class="emoji-grid" id="emojiGrid"></div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-danger hidden" id="btnDeleteCat">Elimina</button>
-        <div class="footer-right">
-          <button class="btn-secondary" id="btnCatCancel">Annulla</button>
-          <button class="btn-primary" id="btnSaveCat">Salva categoria</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- EVENT DETAIL POPUP -->
-  <div class="event-popup hidden" id="eventPopup">
-    <div class="popup-header">
-      <span class="popup-icon" id="popupIcon"></span>
-      <div>
-        <h3 id="popupTitle"></h3>
-        <p class="popup-category" id="popupCategory"></p>
+    <!-- EVENT DETAIL POPUP -->
+    <div class="event-popup hidden" id="eventPopup">
+      <div class="popup-header">
+        <span class="popup-icon" id="popupIcon"></span>
+        <div>
+          <h3 id="popupTitle"></h3>
+          <p class="popup-category" id="popupCategory"></p>
+        </div>
+        <button class="popup-close" id="popupClose">×</button>
       </div>
-      <button class="popup-close" id="popupClose">×</button>
+      <div class="popup-body">
+        <p class="popup-date" id="popupDate"></p>
+        <p class="popup-time" id="popupTime"></p>
+        <p class="popup-location" id="popupLocation"></p>
+        <p class="popup-desc" id="popupDesc"></p>
+      </div>
+      <div class="popup-footer">
+        <button class="btn-delete-popup" id="btnDeletePopup">🗑 Elimina</button>
+        <button class="btn-edit" id="btnEditEvent">✏ Modifica</button>
+      </div>
     </div>
-    <div class="popup-body">
-      <p class="popup-date" id="popupDate"></p>
-      <p class="popup-time" id="popupTime"></p>
-      <p class="popup-location" id="popupLocation"></p>
-      <p class="popup-desc" id="popupDesc"></p>
-    </div>
-    <div class="popup-footer">
-      <button class="btn-delete-popup" id="btnDeletePopup">🗑 Elimina</button>
-      <button class="btn-edit" id="btnEditEvent">✏ Modifica</button>
-    </div>
-  </div>
 
-  <!-- TOAST -->
-  <div class="toast hidden" id="toast"></div>
+    <!-- TOAST -->
+    <div class="toast hidden" id="toast"></div>
 
-  <!-- PRINT FRAME -->
-  <div id="printFrame" class="hidden"></div>
+    <!-- PRINT FRAME -->
+    <div id="printFrame" class="hidden"></div>
 
-  <script src="/js/app.js"></script>
-</body>
+    <script src="/js/app.js"></script>
+  </body>
 </html>

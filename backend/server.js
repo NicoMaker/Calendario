@@ -1,18 +1,18 @@
-const express  = require("express");
-const cors     = require("cors");
-const path     = require("path");
-const http     = require("http");
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const http = require("http");
 const { Server } = require("socket.io");
-const os       = require("os");
+const os = require("os");
 
-const { initDB }       = require("./db/database");
+const { initDB } = require("./db/database");
 const { seedFakeData } = require("./db/seed");
-const pageRoutes       = require("./routes/pages");
-const eventsApi        = require("./api/events");
-const categoriesApi    = require("./api/categories");
+const pageRoutes = require("./routes/pages");
+const eventsApi = require("./api/events");
+const categoriesApi = require("./api/categories");
 
 const PORT = process.env.PORT || 3000;
-const app  = express();
+const app = express();
 
 // ── HTTP server + Socket.IO ───────────────────
 const server = http.createServer(app);
@@ -28,12 +28,14 @@ const io = new Server(server, {
 app.set("io", io);
 
 // ── Middleware ────────────────────────────────
-app.use(cors({
-  origin: "*",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -54,14 +56,16 @@ if (process.env.SEED === "true") {
   console.log("🌱 Modalità DEV_DATI — inserimento dati fittizi...");
   seedFakeData(db);
 } else {
-  console.log("⚪ Modalità DEV — database vuoto (usa npm run dev_dati per i dati fittizi)");
+  console.log(
+    "⚪ Modalità DEV — database vuoto (usa npm run dev_dati per i dati fittizi)",
+  );
 }
 
 app.locals.db = db;
 
 // ── Routes ────────────────────────────────────
-app.use("/",               pageRoutes);
-app.use("/api/events",     eventsApi);
+app.use("/", pageRoutes);
+app.use("/api/events", eventsApi);
 app.use("/api/categories", categoriesApi);
 
 // ── Health check ──────────────────────────────
@@ -96,9 +100,16 @@ app.use((err, req, res, next) => {
 // ── Socket.IO events ──────────────────────────
 io.on("connection", (socket) => {
   console.log(`🔌 Client connesso: ${socket.id}`);
-  socket.emit("connected", { message: "Connesso al calendario", timestamp: new Date().toISOString() });
-  socket.on("disconnect", (reason) => console.log(`🔌 Client disconnesso: ${socket.id} — ${reason}`));
-  socket.on("ping", () => socket.emit("pong", { timestamp: new Date().toISOString() }));
+  socket.emit("connected", {
+    message: "Connesso al calendario",
+    timestamp: new Date().toISOString(),
+  });
+  socket.on("disconnect", (reason) =>
+    console.log(`🔌 Client disconnesso: ${socket.id} — ${reason}`),
+  );
+  socket.on("ping", () =>
+    socket.emit("pong", { timestamp: new Date().toISOString() }),
+  );
 });
 
 // ── IP utilities ──────────────────────────────
@@ -114,20 +125,30 @@ async function getPublicIP() {
   try {
     const https = require("https");
     return new Promise((resolve) => {
-      https.get("https://api.ipify.org?format=json", (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => { try { resolve(JSON.parse(data).ip); } catch { resolve(null); } });
-      }).on("error", () => resolve(null));
+      https
+        .get("https://api.ipify.org?format=json", (res) => {
+          let data = "";
+          res.on("data", (c) => (data += c));
+          res.on("end", () => {
+            try {
+              resolve(JSON.parse(data).ip);
+            } catch {
+              resolve(null);
+            }
+          });
+        })
+        .on("error", () => resolve(null));
     });
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 // ── Avvio server ──────────────────────────────
 server.listen(PORT, "0.0.0.0", async () => {
-  const localIP  = getLocalIP();
+  const localIP = getLocalIP();
   const publicIP = await getPublicIP();
-  const mode     = process.env.SEED === "true" ? "🌱 con dati fittizi" : "⚪ vuoto";
+  const mode = process.env.SEED === "true" ? "🌱 con dati fittizi" : "⚪ vuoto";
 
   console.log(`\n🗓️  Calendario avviato  [${mode}]`);
   console.log(`   Localhost  : http://localhost:${PORT}`);
@@ -169,7 +190,10 @@ function gracefulShutdown(signal) {
     console.log("✅ Server HTTP chiuso.");
     io.close(() => {
       console.log("✅ Socket.IO chiuso.");
-      try { db.close(); console.log("✅ Database chiuso."); } catch (_) {}
+      try {
+        db.close();
+        console.log("✅ Database chiuso.");
+      } catch (_) {}
       console.log("👋 Arrivederci!\n");
       clearTimeout(forceExit);
       process.exit(0);
@@ -177,7 +201,7 @@ function gracefulShutdown(signal) {
   });
 }
 
-process.on("SIGINT",  () => gracefulShutdown("SIGINT (Ctrl+C)"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT (Ctrl+C)"));
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 // Fix Windows: nodemon manda SIGUSR2 per riavviare
@@ -186,7 +210,11 @@ process.once("SIGUSR2", () => {
 });
 
 // Gestione errori globali
-process.on("uncaughtException",  (err)    => console.error("❌ UncaughtException:", err));
-process.on("unhandledRejection", (reason) => console.error("❌ UnhandledRejection:", reason));
+process.on("uncaughtException", (err) =>
+  console.error("❌ UncaughtException:", err),
+);
+process.on("unhandledRejection", (reason) =>
+  console.error("❌ UnhandledRejection:", reason),
+);
 
 module.exports = { app, server, io };

@@ -8,42 +8,62 @@
 const state = {
   today: new Date(),
   current: new Date(),
-  view: 'month',
+  view: "month",
   events: [],
   categories: [],
   // null = tutte, Set vuoto = nessuna, Set con id = quelle selezionate
   selectedCategories: null,
-  searchQuery: '',
+  searchQuery: "",
   searchResults: null,
 };
 
-const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-                   'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-const DAYS_IT   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
-const DAYS_SHORT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const MONTHS_IT = [
+  "Gennaio",
+  "Febbraio",
+  "Marzo",
+  "Aprile",
+  "Maggio",
+  "Giugno",
+  "Luglio",
+  "Agosto",
+  "Settembre",
+  "Ottobre",
+  "Novembre",
+  "Dicembre",
+];
+const DAYS_IT = [
+  "Lunedì",
+  "Martedì",
+  "Mercoledì",
+  "Giovedì",
+  "Venerdì",
+  "Sabato",
+  "Domenica",
+];
+const DAYS_SHORT = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
 // ──────────────── API HELPERS ────────────────
 async function api(method, path, body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const opts = { method, headers: { "Content-Type": "application/json" } };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch('/api' + path, opts);
+  const res = await fetch("/api" + path, opts);
   return res.json();
 }
 
 async function loadEvents() {
   const { year, month } = getYearMonth();
-  const url = `/events?year=${year}&month=${month+1}`;
-  const resp = await api('GET', url);
+  const url = `/events?year=${year}&month=${month + 1}`;
+  const resp = await api("GET", url);
   if (resp.success) state.events = resp.data;
 }
 
 async function loadAllEvents() {
-  const resp = await api('GET', '/events');
+  const resp = await api("GET", "/events");
   if (resp.success) state.events = resp.data;
 }
 
 async function loadCategories() {
-  const resp = await api('GET', '/categories');
+  const resp = await api("GET", "/categories");
   if (resp.success) {
     state.categories = resp.data;
     renderCategoryList();
@@ -56,32 +76,35 @@ function getYearMonth() {
 }
 
 function toDateStr(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function parseDate(str) {
   if (!str) return null;
-  const [y, m, d] = str.split('-').map(Number);
+  const [y, m, d] = str.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
 function formatDate(dateStr) {
   const d = parseDate(dateStr);
-  if (!d) return '';
-  return `${DAYS_IT[(d.getDay()+6)%7]}, ${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`;
+  if (!d) return "";
+  return `${DAYS_IT[(d.getDay() + 6) % 7]}, ${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function formatDateShort(dateStr) {
   const d = parseDate(dateStr);
-  if (!d) return '';
-  return `${d.getDate()} ${MONTHS_IT[d.getMonth()].substring(0,3)} ${d.getFullYear()}`;
+  if (!d) return "";
+  return `${d.getDate()} ${MONTHS_IT[d.getMonth()].substring(0, 3)} ${d.getFullYear()}`;
 }
 
 function getEventsForDay(dateStr) {
-  const src = filterEvents(state.searchResults !== null ? state.searchResults : state.events);
-  return src.filter(e => {
+  const src = filterEvents(
+    state.searchResults !== null ? state.searchResults : state.events,
+  );
+  return src.filter((e) => {
     if (e.start_date === dateStr) return true;
-    if (e.end_date && e.start_date <= dateStr && e.end_date >= dateStr) return true;
+    if (e.end_date && e.start_date <= dateStr && e.end_date >= dateStr)
+      return true;
     return false;
   });
 }
@@ -89,37 +112,37 @@ function getEventsForDay(dateStr) {
 function getEventColor(event) {
   if (event.color) return event.color;
   if (event.category_color) return event.category_color;
-  return '#6366f1';
+  return "#6366f1";
 }
 
 // Applica filtro categorie agli eventi
 // null = tutte, Set vuoto = nessuna, Set con id = solo quelle selezionate
 function filterEvents(events) {
   const f = state.selectedCategories;
-  if (f === null) return events;                              // tutte
-  if (f.size === 0) return [];                                // nessuna
-  return events.filter(e => f.has(String(e.category_id ?? '')));
+  if (f === null) return events; // tutte
+  if (f.size === 0) return []; // nessuna
+  return events.filter((e) => f.has(String(e.category_id ?? "")));
 }
 
 // ──────────────── TIME AUTO-COMPLETE ────────────────
 // Formatta input grezzo in "HH:MM"
 // "8" → "08:00", "830" → "08:30", "1430" → "14:30", "9:00" → "09:00"
 function normalizeTime(raw) {
-  if (!raw) return '';
-  raw = raw.trim().replace(/[^0-9:]/g, '');
-  if (!raw) return '';
+  if (!raw) return "";
+  raw = raw.trim().replace(/[^0-9:]/g, "");
+  if (!raw) return "";
 
-  if (raw.includes(':')) {
-    const [h, m] = raw.split(':').map(s => parseInt(s, 10) || 0);
+  if (raw.includes(":")) {
+    const [h, m] = raw.split(":").map((s) => parseInt(s, 10) || 0);
     if (h < 0 || h > 23 || m < 0 || m > 59) return null; // errore
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
   if (raw.length <= 2) {
     // "8" → 08:00, "14" → 14:00
     const h = parseInt(raw, 10);
     if (h < 0 || h > 23) return null;
-    return `${String(h).padStart(2,'0')}:00`;
+    return `${String(h).padStart(2, "0")}:00`;
   }
 
   if (raw.length === 3) {
@@ -127,7 +150,7 @@ function normalizeTime(raw) {
     const h = parseInt(raw.substring(0, 1), 10);
     const m = parseInt(raw.substring(1), 10);
     if (h > 23 || m > 59) return null;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
   if (raw.length === 4) {
@@ -135,7 +158,7 @@ function normalizeTime(raw) {
     const h = parseInt(raw.substring(0, 2), 10);
     const m = parseInt(raw.substring(2), 10);
     if (h > 23 || m > 59) return null;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
   return null;
@@ -143,27 +166,27 @@ function normalizeTime(raw) {
 
 // Aggiunge 1 ora a "HH:MM"
 function addOneHour(timeStr) {
-  if (!timeStr) return '';
-  const [h, m] = timeStr.split(':').map(Number);
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":").map(Number);
   const newH = (h + 1) % 24;
-  return `${String(newH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  return `${String(newH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 function timeToMinutes(timeStr) {
   if (!timeStr) return -1;
-  const [h, m] = timeStr.split(':').map(Number);
+  const [h, m] = timeStr.split(":").map(Number);
   return h * 60 + m;
 }
 
 function setupTimeInputs() {
-  const startInput = document.getElementById('fStartTime');
-  const endInput   = document.getElementById('fEndTime');
+  const startInput = document.getElementById("fStartTime");
+  const endInput = document.getElementById("fEndTime");
   // startHint no longer needed with native time picker
   // const startHint  = document.getElementById('startTimeHint');
-  const endHint    = document.getElementById('endTimeHint');
+  const endHint = document.getElementById("endTimeHint");
 
   // Auto-compila ora fine (+1h) quando l'utente imposta l'ora di inizio
-  startInput.addEventListener('change', () => {
+  startInput.addEventListener("change", () => {
     const val = startInput.value;
     if (val && !endInput.value) {
       endInput.value = addOneHour(val);
@@ -171,13 +194,13 @@ function setupTimeInputs() {
   });
 
   // Segnala se l'ora di fine è prima di quella di inizio
-  endInput.addEventListener('change', () => {
+  endInput.addEventListener("change", () => {
     const s = startInput.value;
     const e = endInput.value;
     if (s && e && timeToMinutes(e) <= timeToMinutes(s)) {
-      endHint.textContent = '⚠ Deve essere dopo le ' + s;
+      endHint.textContent = "⚠ Deve essere dopo le " + s;
     } else {
-      endHint.textContent = '';
+      endHint.textContent = "";
     }
   });
 }
@@ -185,9 +208,9 @@ function setupTimeInputs() {
 // ──────────────── MINI CALENDAR ────────────────
 function renderMiniCal() {
   const { year, month } = getYearMonth();
-  const container = document.getElementById('miniCal');
+  const container = document.getElementById("miniCal");
   const firstDay = new Date(year, month, 1);
-  const lastDay  = new Date(year, month + 1, 0);
+  const lastDay = new Date(year, month + 1, 0);
   const startDow = (firstDay.getDay() + 6) % 7;
   const todayStr = toDateStr(state.today);
   const currentStr = toDateStr(state.current);
@@ -195,11 +218,11 @@ function renderMiniCal() {
   let html = `
     <div class="mini-cal-header">
       <button class="mini-nav" id="miniPrev">‹</button>
-      <span class="mini-cal-title">${MONTHS_IT[month].substring(0,3)} ${year}</span>
+      <span class="mini-cal-title">${MONTHS_IT[month].substring(0, 3)} ${year}</span>
       <button class="mini-nav" id="miniNext">›</button>
     </div>
     <div class="mini-cal-grid">
-      ${DAYS_SHORT.map(d => `<span class="mini-day-label">${d[0]}</span>`).join('')}
+      ${DAYS_SHORT.map((d) => `<span class="mini-day-label">${d[0]}</span>`).join("")}
   `;
 
   for (let i = 0; i < startDow; i++) {
@@ -207,37 +230,41 @@ function renderMiniCal() {
   }
 
   for (let d = 1; d <= lastDay.getDate(); d++) {
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayEvents = state.searchResults !== null
-      ? state.searchResults.filter(e => e.start_date === dateStr)
-      : state.events.filter(e => e.start_date === dateStr);
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const dayEvents =
+      state.searchResults !== null
+        ? state.searchResults.filter((e) => e.start_date === dateStr)
+        : state.events.filter((e) => e.start_date === dateStr);
     const hasEvents = dayEvents.length > 0;
-    const isSelected = (state.view === 'day' && dateStr === currentStr);
-    const cls = ['mini-day',
-      dateStr === todayStr ? 'today' : '',
-      hasEvents ? 'has-events' : '',
-      isSelected ? 'selected' : '',
-    ].filter(Boolean).join(' ');
+    const isSelected = state.view === "day" && dateStr === currentStr;
+    const cls = [
+      "mini-day",
+      dateStr === todayStr ? "today" : "",
+      hasEvents ? "has-events" : "",
+      isSelected ? "selected" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     html += `<span class="${cls}" data-date="${dateStr}">${d}</span>`;
   }
 
-  html += '</div>';
+  html += "</div>";
   container.innerHTML = html;
 
-  container.querySelectorAll('.mini-day[data-date]').forEach(el => {
-    el.addEventListener('click', () => {
+  container.querySelectorAll(".mini-day[data-date]").forEach((el) => {
+    el.addEventListener("click", () => {
       state.current = parseDate(el.dataset.date);
-      if (state.view !== 'day') setView('day');
+      if (state.view !== "day") setView("day");
       else refresh();
     });
   });
 
-  document.getElementById('miniPrev').addEventListener('click', e => {
+  document.getElementById("miniPrev").addEventListener("click", (e) => {
     e.stopPropagation();
     state.current = new Date(year, month - 1, 1);
     refresh();
   });
-  document.getElementById('miniNext').addEventListener('click', e => {
+  document.getElementById("miniNext").addEventListener("click", (e) => {
     e.stopPropagation();
     state.current = new Date(year, month + 1, 1);
     refresh();
@@ -246,37 +273,38 @@ function renderMiniCal() {
 
 // ──────────────── CATEGORY LIST ────────────────
 function renderCategoryList() {
-  const list   = document.getElementById('categoryList');
-  const f      = state.selectedCategories;
-  const isAll  = f === null;
+  const list = document.getElementById("categoryList");
+  const f = state.selectedCategories;
+  const isAll = f === null;
   const isNone = f instanceof Set && f.size === 0;
 
   // Conta eventi visibili dopo filtro
-  const allEvSrc = state.searchResults !== null ? state.searchResults : state.events;
+  const allEvSrc =
+    state.searchResults !== null ? state.searchResults : state.events;
   const visibleEvents = filterEvents(allEvSrc);
 
   // Aggiorna badge filtro attivo
-  const badge = document.getElementById('catFilterBadge');
+  const badge = document.getElementById("catFilterBadge");
   if (f === null) {
-    badge.classList.add('hidden');
+    badge.classList.add("hidden");
   } else if (f.size === 0) {
-    badge.textContent = '0';
-    badge.classList.remove('hidden');
+    badge.textContent = "0";
+    badge.classList.remove("hidden");
   } else {
     badge.textContent = f.size;
-    badge.classList.remove('hidden');
+    badge.classList.remove("hidden");
   }
 
   list.innerHTML = `
     <!-- TUTTE -->
-    <li class="category-item cat-special ${isAll ? 'active' : ''}" data-action="all">
+    <li class="category-item cat-special ${isAll ? "active" : ""}" data-action="all">
       <span class="cat-dot" style="background:linear-gradient(135deg,#6b6560,#9c9590)"></span>
       <span class="cat-name">Tutte</span>
       <span class="cat-count">${allEvSrc.length}</span>
     </li>
 
     <!-- NESSUNA -->
-    <li class="category-item cat-special ${isNone ? 'active active-none' : ''}" data-action="none">
+    <li class="category-item cat-special ${isNone ? "active active-none" : ""}" data-action="none">
       <span class="cat-dot" style="background:#d1d5db;border:1px dashed #9ca3af"></span>
       <span class="cat-name">Nessuna</span>
       <span class="cat-count">0</span>
@@ -284,46 +312,50 @@ function renderCategoryList() {
 
     <li class="cat-separator"></li>
 
-    ${state.categories.map(c => {
-      const isSelected = isAll
-        ? true
-        : (f instanceof Set ? f.has(String(c.id)) : false);
-      return `
-        <li class="category-item ${isSelected && !isNone ? 'active' : 'inactive'}" data-id="${c.id}">
-          <span class="cat-check">${isSelected && !isNone ? '✓' : ''}</span>
+    ${state.categories
+      .map((c) => {
+        const isSelected = isAll
+          ? true
+          : f instanceof Set
+            ? f.has(String(c.id))
+            : false;
+        return `
+        <li class="category-item ${isSelected && !isNone ? "active" : "inactive"}" data-id="${c.id}">
+          <span class="cat-check">${isSelected && !isNone ? "✓" : ""}</span>
           <span class="cat-dot" style="background:${c.color}"></span>
           <span class="cat-name">${c.icon} ${c.name}</span>
           <span class="cat-count">${c.event_count}</span>
           <button class="cat-edit-btn" data-cat-id="${c.id}" title="Modifica">✏</button>
         </li>
       `;
-    }).join('')}
+      })
+      .join("")}
   `;
 
   // Click su "Tutte"
-  list.querySelector('[data-action="all"]').addEventListener('click', () => {
+  list.querySelector('[data-action="all"]').addEventListener("click", () => {
     state.selectedCategories = null;
     renderCategoryList();
     renderCurrentView();
   });
 
   // Click su "Nessuna"
-  list.querySelector('[data-action="none"]').addEventListener('click', () => {
+  list.querySelector('[data-action="none"]').addEventListener("click", () => {
     state.selectedCategories = new Set();
     renderCategoryList();
     renderCurrentView();
   });
 
   // Click su singola categoria
-  list.querySelectorAll('.category-item[data-id]').forEach(item => {
-    item.addEventListener('click', e => {
-      if (e.target.closest('.cat-edit-btn')) return;
+  list.querySelectorAll(".category-item[data-id]").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      if (e.target.closest(".cat-edit-btn")) return;
 
       const id = String(item.dataset.id);
 
       if (isAll) {
         // Da "tutte" → deseleziona quella cliccata (le altre restano attive)
-        const newSet = new Set(state.categories.map(c => String(c.id)));
+        const newSet = new Set(state.categories.map((c) => String(c.id)));
         newSet.delete(id);
         state.selectedCategories = newSet;
       } else if (f instanceof Set) {
@@ -334,8 +366,11 @@ function renderCategoryList() {
           newSet.add(id);
         }
         // Se tutte selezionate → torna a null (Tutte)
-        const allIds = state.categories.map(c => String(c.id));
-        if (newSet.size === allIds.length && allIds.every(i => newSet.has(i))) {
+        const allIds = state.categories.map((c) => String(c.id));
+        if (
+          newSet.size === allIds.length &&
+          allIds.every((i) => newSet.has(i))
+        ) {
           state.selectedCategories = null;
         } else {
           state.selectedCategories = newSet;
@@ -348,48 +383,52 @@ function renderCategoryList() {
   });
 
   // Click edit categoria
-  list.querySelectorAll('.cat-edit-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
+  list.querySelectorAll(".cat-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const cat = state.categories.find(c => c.id == btn.dataset.catId);
+      const cat = state.categories.find((c) => c.id == btn.dataset.catId);
       if (cat) openCatModal(cat);
     });
   });
 
   // Popola select nel modal evento
-  const select = document.getElementById('fCategory');
+  const select = document.getElementById("fCategory");
   const prevVal = select.value;
-  select.innerHTML = `<option value="">Nessuna</option>` +
-    state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  select.innerHTML =
+    `<option value="">Nessuna</option>` +
+    state.categories
+      .map((c) => `<option value="${c.id}">${c.icon} ${c.name}</option>`)
+      .join("");
   if (prevVal) select.value = prevVal;
 }
 
 // Renderizza la vista corrente senza ricaricare dal server
 function renderCurrentView() {
-  if (state.view === 'month')     renderMonth();
-  else if (state.view === 'week') renderWeek();
-  else if (state.view === 'day')  renderDay();
-  else                            renderList();
+  if (state.view === "month") renderMonth();
+  else if (state.view === "week") renderWeek();
+  else if (state.view === "day") renderDay();
+  else renderList();
   renderMiniCal();
 }
 
 // ──────────────── MONTH VIEW ────────────────
 function renderMonth() {
   const { year, month } = getYearMonth();
-  document.getElementById('currentPeriod').textContent = `${MONTHS_IT[month]} ${year}`;
+  document.getElementById("currentPeriod").textContent =
+    `${MONTHS_IT[month]} ${year}`;
 
   const firstDay = new Date(year, month, 1);
-  const lastDay  = new Date(year, month + 1, 0);
+  const lastDay = new Date(year, month + 1, 0);
   const startDow = (firstDay.getDay() + 6) % 7;
-  const grid = document.getElementById('daysGrid');
-  grid.innerHTML = '';
+  const grid = document.getElementById("daysGrid");
+  grid.innerHTML = "";
 
   for (let i = startDow - 1; i >= 0; i--) {
     const d = new Date(year, month, -i);
     grid.appendChild(createDayCell(d.getDate(), toDateStr(d), true));
   }
   for (let d = 1; d <= lastDay.getDate(); d++) {
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     grid.appendChild(createDayCell(d, dateStr, false));
   }
   const totalCells = Math.ceil((startDow + lastDay.getDate()) / 7) * 7;
@@ -401,9 +440,9 @@ function renderMonth() {
 }
 
 function createDayCell(dayNum, dateStr, isOther) {
-  const cell = document.createElement('div');
+  const cell = document.createElement("div");
   const todayStr = toDateStr(state.today);
-  cell.className = `day-cell ${dateStr === todayStr ? 'today' : ''} ${isOther ? 'other-month' : ''}`;
+  cell.className = `day-cell ${dateStr === todayStr ? "today" : ""} ${isOther ? "other-month" : ""}`;
   cell.dataset.date = dateStr;
 
   const dayEvents = getEventsForDay(dateStr);
@@ -411,30 +450,34 @@ function createDayCell(dayNum, dateStr, isOther) {
   const visibleEvents = dayEvents.slice(0, maxVisible);
   const extra = dayEvents.length - maxVisible;
 
-  let evHtml = visibleEvents.map(e => {
-    const color = getEventColor(e);
-    return `<div class="event-chip" style="background:${color}" data-id="${e.id}" title="${e.title}">
+  let evHtml = visibleEvents
+    .map((e) => {
+      const color = getEventColor(e);
+      return `<div class="event-chip" style="background:${color}" data-id="${e.id}" title="${e.title}">
       <span class="event-chip-dot"></span>${e.title}
     </div>`;
-  }).join('');
+    })
+    .join("");
   if (extra > 0) evHtml += `<span class="more-events">+${extra} altri</span>`;
 
   cell.innerHTML = `<span class="day-num">${dayNum}</span>${evHtml}`;
 
-  cell.addEventListener('click', e => {
-    if (!e.target.closest('.event-chip')) {
+  cell.addEventListener("click", (e) => {
+    if (!e.target.closest(".event-chip")) {
       if (state.searchQuery) {
         openNewEventModal(dateStr);
       } else {
         state.current = parseDate(dateStr);
-        setView('day');
+        setView("day");
       }
     }
   });
-  cell.querySelectorAll('.event-chip').forEach(chip => {
-    chip.addEventListener('click', e => {
+  cell.querySelectorAll(".event-chip").forEach((chip) => {
+    chip.addEventListener("click", (e) => {
       e.stopPropagation();
-      const event = (state.searchResults || state.events).find(ev => ev.id == chip.dataset.id);
+      const event = (state.searchResults || state.events).find(
+        (ev) => ev.id == chip.dataset.id,
+      );
       if (event) showEventPopup(event, chip);
     });
   });
@@ -447,13 +490,14 @@ function renderWeek() {
   const dow = (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - dow);
   const weekStart = new Date(d);
-  const weekEnd = new Date(d); weekEnd.setDate(weekEnd.getDate() + 6);
+  const weekEnd = new Date(d);
+  weekEnd.setDate(weekEnd.getDate() + 6);
 
-  document.getElementById('currentPeriod').textContent =
+  document.getElementById("currentPeriod").textContent =
     `${weekStart.getDate()} — ${weekEnd.getDate()} ${MONTHS_IT[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
 
-  const body = document.getElementById('weekBody');
-  body.innerHTML = '';
+  const body = document.getElementById("weekBody");
+  body.innerHTML = "";
   const todayStr = toDateStr(state.today);
 
   for (let i = 0; i < 7; i++) {
@@ -463,53 +507,59 @@ function renderWeek() {
     const dayEvents = getEventsForDay(dateStr);
     const isT = dateStr === todayStr;
 
-    const row = document.createElement('div');
-    row.className = 'week-day-row';
+    const row = document.createElement("div");
+    row.className = "week-day-row";
 
     const evHtml = dayEvents.length
-      ? dayEvents.map(e => {
-          const color = getEventColor(e);
-          const time = e.start_time ? `${e.start_time}${e.end_time ? ' – '+e.end_time : ''}` : '';
-          return `<div class="week-event-item" style="background:${color}" data-id="${e.id}">
+      ? dayEvents
+          .map((e) => {
+            const color = getEventColor(e);
+            const time = e.start_time
+              ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
+              : "";
+            return `<div class="week-event-item" style="background:${color}" data-id="${e.id}">
             <div class="week-event-top">
-              <span>${e.category_icon || '📌'}</span>
+              <span>${e.category_icon || "📌"}</span>
               <strong style="flex:1">${e.title}</strong>
-              ${time ? `<span style="opacity:.7;font-size:10px">${time}</span>` : ''}
+              ${time ? `<span style="opacity:.7;font-size:10px">${time}</span>` : ""}
             </div>
-            ${e.description ? `<div style="font-size:10px;opacity:.8;font-style:italic;margin-top:3px">${e.description}</div>` : ''}
+            ${e.description ? `<div style="font-size:10px;opacity:.8;font-style:italic;margin-top:3px">${e.description}</div>` : ""}
             <div class="week-event-actions">
               <button class="btn-week-edit" data-id="${e.id}">✏ Modifica</button>
               <button class="btn-week-delete" data-id="${e.id}">🗑 Elimina</button>
             </div>
           </div>`;
-        }).join('')
+          })
+          .join("")
       : '<div class="week-empty">Nessun evento</div>';
 
     row.innerHTML = `
       <div class="week-day-header" data-date="${dateStr}" style="cursor:pointer">
         <span class="week-day-name">${DAYS_SHORT[i]}</span>
-        <span class="week-day-num ${isT ? 'today' : ''}">${day.getDate()}</span>
-        <span style="font-size:11px;color:var(--text-light);margin-left:auto">${dayEvents.length ? dayEvents.length+' eventi' : ''}</span>
+        <span class="week-day-num ${isT ? "today" : ""}">${day.getDate()}</span>
+        <span style="font-size:11px;color:var(--text-light);margin-left:auto">${dayEvents.length ? dayEvents.length + " eventi" : ""}</span>
       </div>
       <div class="week-day-events">${evHtml}</div>
     `;
 
-    row.querySelector('.week-day-header').addEventListener('click', () => {
+    row.querySelector(".week-day-header").addEventListener("click", () => {
       state.current = parseDate(dateStr);
-      setView('day');
+      setView("day");
     });
 
-    row.querySelectorAll('.btn-week-edit').forEach(btn => {
-      btn.addEventListener('click', e => {
+    row.querySelectorAll(".btn-week-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const event = (state.searchResults || state.events).find(ev => ev.id == btn.dataset.id);
+        const event = (state.searchResults || state.events).find(
+          (ev) => ev.id == btn.dataset.id,
+        );
         if (event) openEditEventModal(event);
       });
     });
-    row.querySelectorAll('.btn-week-delete').forEach(btn => {
-      btn.addEventListener('click', e => {
+    row.querySelectorAll(".btn-week-delete").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
+        if (confirm("Eliminare questo evento?")) deleteEvent(btn.dataset.id);
       });
     });
     body.appendChild(row);
@@ -520,26 +570,26 @@ function renderWeek() {
 function renderDay() {
   const dateStr = toDateStr(state.current);
   const d = state.current;
-  const dayName = DAYS_IT[(d.getDay()+6)%7];
+  const dayName = DAYS_IT[(d.getDay() + 6) % 7];
   const isT = dateStr === toDateStr(state.today);
 
-  document.getElementById('currentPeriod').textContent =
+  document.getElementById("currentPeriod").textContent =
     `${dayName} ${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
 
   const dayEvents = getEventsForDay(dateStr);
-  const timeline = document.getElementById('dayTimeline');
+  const timeline = document.getElementById("dayTimeline");
 
   // Ordina per ora inizio (senza orario → in fondo)
   const sorted = [...dayEvents].sort((a, b) => {
-    const ta = a.start_time || '99:99';
-    const tb = b.start_time || '99:99';
+    const ta = a.start_time || "99:99";
+    const tb = b.start_time || "99:99";
     return ta.localeCompare(tb);
   });
 
   let html = `
     <div class="day-header-big">
-      <h2>${isT ? '📍 Oggi — ' : ''}${dayName} ${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}</h2>
-      <p>${sorted.length} ${sorted.length === 1 ? 'impegno' : 'impegni'} in agenda</p>
+      <h2>${isT ? "📍 Oggi — " : ""}${dayName} ${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}</h2>
+      <p>${sorted.length} ${sorted.length === 1 ? "impegno" : "impegni"} in agenda</p>
     </div>
   `;
 
@@ -550,27 +600,30 @@ function renderDay() {
       <button onclick="openNewEventModal('${dateStr}')" style="margin-top:16px;padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-family:inherit;font-size:13px">+ Aggiungi evento</button>
     </div>`;
   } else {
-    sorted.forEach(e => {
+    sorted.forEach((e) => {
       const color = getEventColor(e);
-      const timeLabel = e.all_day ? 'Tutto il giorno' :
-        (e.start_time ? `${e.start_time}${e.end_time ? ' – ' + e.end_time : ''}` : 'Orario non specificato');
+      const timeLabel = e.all_day
+        ? "Tutto il giorno"
+        : e.start_time
+          ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
+          : "Orario non specificato";
       html += `
         <div class="timeline-slot">
-          <div class="timeline-hour">${e.all_day ? '—' : (e.start_time || '—')}</div>
+          <div class="timeline-hour">${e.all_day ? "—" : e.start_time || "—"}</div>
           <div class="timeline-line">
             <div class="timeline-dot" style="border-color:${color};background:${color}20"></div>
             <div class="timeline-track"></div>
           </div>
           <div class="day-event-card" style="border-left-color:${color}" data-id="${e.id}">
-            <span class="day-event-icon">${e.category_icon || '📌'}</span>
+            <span class="day-event-icon">${e.category_icon || "📌"}</span>
             <div class="day-event-body">
               <div class="day-event-title">${e.title}</div>
               <div class="day-event-meta">
                 <span>🕐 ${timeLabel}</span>
-                ${e.location ? `<span>📍 ${e.location}</span>` : ''}
-                ${e.category_name ? `<span style="color:${color}">${e.category_name}</span>` : ''}
+                ${e.location ? `<span>📍 ${e.location}</span>` : ""}
+                ${e.category_name ? `<span style="color:${color}">${e.category_name}</span>` : ""}
               </div>
-              ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ''}
+              ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ""}
               <div class="event-actions">
                 <button class="btn-event-edit" data-id="${e.id}">✏ Modifica</button>
                 <button class="btn-event-delete" data-id="${e.id}">🗑 Elimina</button>
@@ -584,22 +637,26 @@ function renderDay() {
 
   timeline.innerHTML = html;
 
-  timeline.querySelectorAll('.btn-event-edit').forEach(btn => {
-    btn.addEventListener('click', e => {
+  timeline.querySelectorAll(".btn-event-edit").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const event = (state.searchResults || state.events).find(ev => ev.id == btn.dataset.id);
+      const event = (state.searchResults || state.events).find(
+        (ev) => ev.id == btn.dataset.id,
+      );
       if (event) openEditEventModal(event);
     });
   });
-  timeline.querySelectorAll('.btn-event-delete').forEach(btn => {
-    btn.addEventListener('click', e => {
+  timeline.querySelectorAll(".btn-event-delete").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
+      if (confirm("Eliminare questo evento?")) deleteEvent(btn.dataset.id);
     });
   });
-  timeline.querySelectorAll('.day-event-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const event = (state.searchResults || state.events).find(ev => ev.id == card.dataset.id);
+  timeline.querySelectorAll(".day-event-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const event = (state.searchResults || state.events).find(
+        (ev) => ev.id == card.dataset.id,
+      );
       if (event) showEventPopup(event, card);
     });
   });
@@ -609,37 +666,45 @@ function renderDay() {
 function renderList() {
   const isSearch = state.searchResults !== null;
   if (isSearch) {
-    document.getElementById('currentPeriod').textContent = `Risultati: "${state.searchQuery}"`;
+    document.getElementById("currentPeriod").textContent =
+      `Risultati: "${state.searchQuery}"`;
   } else {
-    document.getElementById('currentPeriod').textContent = 'Tutti gli eventi';
+    document.getElementById("currentPeriod").textContent = "Tutti gli eventi";
   }
 
   const src = filterEvents(isSearch ? state.searchResults : state.events);
-  const container = document.getElementById('listContainer');
+  const container = document.getElementById("listContainer");
 
   if (!src.length) {
     container.innerHTML = `<p style="color:var(--text-light);text-align:center;padding:60px;font-style:italic">
-      ${isSearch ? `Nessun risultato per "${state.searchQuery}"` : 'Nessun evento trovato.'}
+      ${isSearch ? `Nessun risultato per "${state.searchQuery}"` : "Nessun evento trovato."}
     </p>`;
     return;
   }
 
   const groups = {};
-  src.forEach(e => {
+  src.forEach((e) => {
     const d = parseDate(e.start_date);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    if (!groups[key]) groups[key] = { label: `${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`, events: [] };
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!groups[key])
+      groups[key] = {
+        label: `${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`,
+        events: [],
+      };
     groups[key].events.push(e);
   });
 
-  container.innerHTML = Object.values(groups).map(g => `
+  container.innerHTML = Object.values(groups)
+    .map(
+      (g) => `
     <div class="list-month-group">
       <h3 class="list-month-title">${g.label}</h3>
-      ${g.events.map(e => {
-        const color = getEventColor(e);
-        const d = parseDate(e.start_date);
-        const dow = DAYS_SHORT[(d.getDay()+6)%7];
-        return `
+      ${g.events
+        .map((e) => {
+          const color = getEventColor(e);
+          const d = parseDate(e.start_date);
+          const dow = DAYS_SHORT[(d.getDay() + 6) % 7];
+          return `
           <div class="list-event" data-id="${e.id}">
             <div class="list-event-top">
               <div class="list-event-date">
@@ -650,11 +715,11 @@ function renderList() {
               <div class="list-event-content">
                 <div class="list-event-title">${e.title}</div>
                 <div class="list-event-meta">
-                  ${e.start_time ? `<span>🕐 ${e.start_time}${e.end_time?' – '+e.end_time:''}</span>` : ''}
-                  ${e.category_name ? `<span>${e.category_icon} ${e.category_name}</span>` : ''}
-                  ${e.location ? `<span>📍 ${e.location}</span>` : ''}
+                  ${e.start_time ? `<span>🕐 ${e.start_time}${e.end_time ? " – " + e.end_time : ""}</span>` : ""}
+                  ${e.category_name ? `<span>${e.category_icon} ${e.category_name}</span>` : ""}
+                  ${e.location ? `<span>📍 ${e.location}</span>` : ""}
                 </div>
-                ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ''}
+                ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ""}
               </div>
             </div>
             <div class="list-event-actions">
@@ -663,52 +728,63 @@ function renderList() {
             </div>
           </div>
         `;
-      }).join('')}
+        })
+        .join("")}
     </div>
-  `).join('');
+  `,
+    )
+    .join("");
 
-  container.querySelectorAll('.btn-event-edit').forEach(btn => {
-    btn.addEventListener('click', e => {
+  container.querySelectorAll(".btn-event-edit").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const event = src.find(ev => ev.id == btn.dataset.id);
+      const event = src.find((ev) => ev.id == btn.dataset.id);
       if (event) openEditEventModal(event);
     });
   });
-  container.querySelectorAll('.btn-event-delete').forEach(btn => {
-    btn.addEventListener('click', e => {
+  container.querySelectorAll(".btn-event-delete").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (confirm('Eliminare questo evento?')) deleteEvent(btn.dataset.id);
+      if (confirm("Eliminare questo evento?")) deleteEvent(btn.dataset.id);
     });
   });
 }
 
 // ──────────────── POPUP EVENTO ────────────────
 function showEventPopup(event, anchor) {
-  const popup = document.getElementById('eventPopup');
-  document.getElementById('popupIcon').textContent = event.category_icon || '📌';
-  document.getElementById('popupTitle').textContent = event.title;
-  document.getElementById('popupCategory').textContent = event.category_name || '';
+  const popup = document.getElementById("eventPopup");
+  document.getElementById("popupIcon").textContent =
+    event.category_icon || "📌";
+  document.getElementById("popupTitle").textContent = event.title;
+  document.getElementById("popupCategory").textContent =
+    event.category_name || "";
 
-  document.getElementById('popupDate').textContent =
+  document.getElementById("popupDate").textContent =
     event.end_date && event.end_date !== event.start_date
       ? `📅 ${formatDate(event.start_date)} → ${formatDateShort(event.end_date)}`
       : `📅 ${formatDate(event.start_date)}`;
 
-  const timeEl = document.getElementById('popupTime');
+  const timeEl = document.getElementById("popupTime");
   if (event.start_time) {
-    timeEl.textContent = `🕐 ${event.start_time}${event.end_time ? ' – ' + event.end_time : ''}`;
-    timeEl.classList.remove('hidden');
-  } else { timeEl.classList.add('hidden'); }
+    timeEl.textContent = `🕐 ${event.start_time}${event.end_time ? " – " + event.end_time : ""}`;
+    timeEl.classList.remove("hidden");
+  } else {
+    timeEl.classList.add("hidden");
+  }
 
-  const locEl = document.getElementById('popupLocation');
-  if (event.location) { locEl.textContent = `📍 ${event.location}`; locEl.classList.remove('hidden'); }
-  else locEl.classList.add('hidden');
+  const locEl = document.getElementById("popupLocation");
+  if (event.location) {
+    locEl.textContent = `📍 ${event.location}`;
+    locEl.classList.remove("hidden");
+  } else locEl.classList.add("hidden");
 
-  const descEl = document.getElementById('popupDesc');
-  if (event.description) { descEl.textContent = event.description; descEl.classList.remove('hidden'); }
-  else descEl.classList.add('hidden');
+  const descEl = document.getElementById("popupDesc");
+  if (event.description) {
+    descEl.textContent = event.description;
+    descEl.classList.remove("hidden");
+  } else descEl.classList.add("hidden");
 
-  popup.classList.remove('hidden');
+  popup.classList.remove("hidden");
   const rect = anchor.getBoundingClientRect();
   const pw = 300;
   let left = rect.right + 8;
@@ -716,134 +792,145 @@ function showEventPopup(event, anchor) {
   if (left + pw > window.innerWidth - 16) left = rect.left - pw - 8;
   if (top + 260 > window.innerHeight) top = window.innerHeight - 270;
   popup.style.left = `${Math.max(8, left)}px`;
-  popup.style.top  = `${Math.max(8, top)}px`;
+  popup.style.top = `${Math.max(8, top)}px`;
 
-  document.getElementById('btnEditEvent').onclick = () => { closePopup(); openEditEventModal(event); };
+  document.getElementById("btnEditEvent").onclick = () => {
+    closePopup();
+    openEditEventModal(event);
+  };
 
-  document.getElementById('btnDeletePopup').onclick = async () => {
+  document.getElementById("btnDeletePopup").onclick = async () => {
     if (!confirm(`Eliminare "${event.title}"?`)) return;
-    const resp = await api('DELETE', `/events/${event.id}`);
+    const resp = await api("DELETE", `/events/${event.id}`);
     if (resp.success) {
       closePopup();
-      showToast('🗑 Evento eliminato');
+      showToast("🗑 Evento eliminato");
       await refresh();
     } else {
-      showToast('❌ ' + resp.error);
+      showToast("❌ " + resp.error);
     }
   };
 }
 
 function closePopup() {
-  document.getElementById('eventPopup').classList.add('hidden');
+  document.getElementById("eventPopup").classList.add("hidden");
 }
 
 // ──────────────── MODAL ────────────────
 function openNewEventModal(dateStr = null) {
   const today = dateStr || toDateStr(state.today);
   resetForm();
-  document.getElementById('modalTitle').textContent = 'Nuovo Evento';
-  document.getElementById('btnDeleteEvent').classList.add('hidden');
-  document.getElementById('fStartDate').value = today;
-  document.getElementById('modalOverlay').classList.remove('hidden');
-  document.getElementById('fTitle').focus();
+  document.getElementById("modalTitle").textContent = "Nuovo Evento";
+  document.getElementById("btnDeleteEvent").classList.add("hidden");
+  document.getElementById("fStartDate").value = today;
+  document.getElementById("modalOverlay").classList.remove("hidden");
+  document.getElementById("fTitle").focus();
 }
 
 function syncColorFromCategory(catId) {
   if (!catId) {
-    document.getElementById('fColor').value = '#ffffff';
+    document.getElementById("fColor").value = "#ffffff";
     return;
   }
-  const cat = state.categories.find(c => String(c.id) === String(catId));
-  document.getElementById('fColor').value = (cat && cat.color) ? cat.color : '#ffffff';
+  const cat = state.categories.find((c) => String(c.id) === String(catId));
+  document.getElementById("fColor").value =
+    cat && cat.color ? cat.color : "#ffffff";
 }
 
 function openEditEventModal(event) {
   resetForm();
-  document.getElementById('modalTitle').textContent = 'Modifica Evento';
-  document.getElementById('btnDeleteEvent').classList.remove('hidden');
-  document.getElementById('eventId').value = event.id;
-  document.getElementById('fTitle').value = event.title || '';
-  document.getElementById('fStartDate').value = event.start_date || '';
-  document.getElementById('fEndDate').value = event.end_date || '';
-  document.getElementById('fStartTime').value = event.start_time || '';
-  document.getElementById('fEndTime').value = event.end_time || '';
-  document.getElementById('fLocation').value = event.location || '';
-  document.getElementById('fCategory').value = event.category_id || '';
+  document.getElementById("modalTitle").textContent = "Modifica Evento";
+  document.getElementById("btnDeleteEvent").classList.remove("hidden");
+  document.getElementById("eventId").value = event.id;
+  document.getElementById("fTitle").value = event.title || "";
+  document.getElementById("fStartDate").value = event.start_date || "";
+  document.getElementById("fEndDate").value = event.end_date || "";
+  document.getElementById("fStartTime").value = event.start_time || "";
+  document.getElementById("fEndTime").value = event.end_time || "";
+  document.getElementById("fLocation").value = event.location || "";
+  document.getElementById("fCategory").value = event.category_id || "";
   // Usa il colore specifico dell'evento se esiste, altrimenti prende quello della categoria
   syncColorFromCategory(event.category_id);
-  document.getElementById('fDescription').value = event.description || '';
-  document.getElementById('fAllDay').checked = !!event.all_day;
+  document.getElementById("fDescription").value = event.description || "";
+  document.getElementById("fAllDay").checked = !!event.all_day;
   toggleTimeRow();
-  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById("modalOverlay").classList.remove("hidden");
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById("modalOverlay").classList.add("hidden");
   resetForm();
 }
 
 function resetForm() {
-  document.getElementById('eventForm').reset();
-  document.getElementById('eventId').value = '';
-  document.getElementById('fColor').value = '#ffffff';
-  document.getElementById('timeRow').style.display = '';
-  document.getElementById('endTimeHint').textContent = '';
+  document.getElementById("eventForm").reset();
+  document.getElementById("eventId").value = "";
+  document.getElementById("fColor").value = "#ffffff";
+  document.getElementById("timeRow").style.display = "";
+  document.getElementById("endTimeHint").textContent = "";
 }
 
 function toggleTimeRow() {
-  const allDay = document.getElementById('fAllDay').checked;
-  document.getElementById('timeRow').style.display = allDay ? 'none' : '';
+  const allDay = document.getElementById("fAllDay").checked;
+  document.getElementById("timeRow").style.display = allDay ? "none" : "";
 }
 
 async function saveEvent() {
-  const id = document.getElementById('eventId').value;
+  const id = document.getElementById("eventId").value;
 
-  const startTime = document.getElementById('fStartTime').value || null;
-  const endTime   = document.getElementById('fEndTime').value   || null;
-  const allDay    = document.getElementById('fAllDay').checked;
+  const startTime = document.getElementById("fStartTime").value || null;
+  const endTime = document.getElementById("fEndTime").value || null;
+  const allDay = document.getElementById("fAllDay").checked;
 
   // Validazione orari
-  if (!allDay && startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
-    showToast('⚠️ L\'ora di fine deve essere dopo l\'ora di inizio!'); return;
+  if (
+    !allDay &&
+    startTime &&
+    endTime &&
+    timeToMinutes(endTime) <= timeToMinutes(startTime)
+  ) {
+    showToast("⚠️ L'ora di fine deve essere dopo l'ora di inizio!");
+    return;
   }
 
   const body = {
-    title:       document.getElementById('fTitle').value,
-    start_date:  document.getElementById('fStartDate').value,
-    end_date:    document.getElementById('fEndDate').value || null,
-    start_time:  startTime,
-    end_time:    endTime,
-    location:    document.getElementById('fLocation').value || null,
-    category_id: document.getElementById('fCategory').value || null,
-    all_day:     allDay ? 1 : 0,
-    color:       document.getElementById('fColor').value,
-    description: document.getElementById('fDescription').value || null,
+    title: document.getElementById("fTitle").value,
+    start_date: document.getElementById("fStartDate").value,
+    end_date: document.getElementById("fEndDate").value || null,
+    start_time: startTime,
+    end_time: endTime,
+    location: document.getElementById("fLocation").value || null,
+    category_id: document.getElementById("fCategory").value || null,
+    all_day: allDay ? 1 : 0,
+    color: document.getElementById("fColor").value,
+    description: document.getElementById("fDescription").value || null,
   };
 
   if (!body.title || !body.start_date) {
-    showToast('⚠️ Compila titolo e data!'); return;
+    showToast("⚠️ Compila titolo e data!");
+    return;
   }
 
   const resp = id
-    ? await api('PUT', `/events/${id}`, body)
-    : await api('POST', '/events', body);
+    ? await api("PUT", `/events/${id}`, body)
+    : await api("POST", "/events", body);
 
   if (resp.success) {
-    showToast(id ? '✅ Evento aggiornato!' : '✅ Evento creato!');
+    showToast(id ? "✅ Evento aggiornato!" : "✅ Evento creato!");
     closeModal();
     await refresh();
   } else {
-    showToast('❌ Errore: ' + resp.error);
+    showToast("❌ Errore: " + resp.error);
   }
 }
 
 async function deleteEvent(directId) {
-  const id = directId || document.getElementById('eventId').value;
+  const id = directId || document.getElementById("eventId").value;
   if (!id) return;
-  if (!directId && !confirm('Eliminare questo evento?')) return;
-  const resp = await api('DELETE', `/events/${id}`);
+  if (!directId && !confirm("Eliminare questo evento?")) return;
+  const resp = await api("DELETE", `/events/${id}`);
   if (resp.success) {
-    showToast('🗑 Evento eliminato');
+    showToast("🗑 Evento eliminato");
     if (!directId) closeModal();
     await refresh();
   }
@@ -852,7 +939,12 @@ async function deleteEvent(directId) {
 // ──────────────── STAMPA ────────────────
 function buildPrintHTML(events, title, subtitle) {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('it-IT', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const dateStr = now.toLocaleDateString("it-IT", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   if (!events.length) {
     return `
@@ -866,34 +958,45 @@ function buildPrintHTML(events, title, subtitle) {
   }
 
   const sorted = [...events].sort((a, b) => {
-    if (a.start_date !== b.start_date) return a.start_date.localeCompare(b.start_date);
-    const ta = a.start_time || '99:99';
-    const tb = b.start_time || '99:99';
+    if (a.start_date !== b.start_date)
+      return a.start_date.localeCompare(b.start_date);
+    const ta = a.start_time || "99:99";
+    const tb = b.start_time || "99:99";
     return ta.localeCompare(tb);
   });
 
-  const rows = sorted.map(e => {
-    const color = getEventColor(e);
-    const timeLabel = e.all_day ? 'Tutto il giorno' :
-      (e.start_time ? `${e.start_time}${e.end_time ? ' – ' + e.end_time : ''}` : '—');
-    const details = [
-      e.category_name ? `${e.category_icon} ${e.category_name}` : '',
-      e.location ? `📍 ${e.location}` : '',
-      formatDate(e.start_date) + (e.end_date && e.end_date !== e.start_date ? ` → ${formatDateShort(e.end_date)}` : ''),
-    ].filter(Boolean).join('  ·  ');
+  const rows = sorted
+    .map((e) => {
+      const color = getEventColor(e);
+      const timeLabel = e.all_day
+        ? "Tutto il giorno"
+        : e.start_time
+          ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
+          : "—";
+      const details = [
+        e.category_name ? `${e.category_icon} ${e.category_name}` : "",
+        e.location ? `📍 ${e.location}` : "",
+        formatDate(e.start_date) +
+          (e.end_date && e.end_date !== e.start_date
+            ? ` → ${formatDateShort(e.end_date)}`
+            : ""),
+      ]
+        .filter(Boolean)
+        .join("  ·  ");
 
-    return `
+      return `
       <div class="print-event-row">
         <div class="print-event-time">${timeLabel}</div>
         <div class="print-event-dot" style="background:${color}"></div>
         <div class="print-event-body">
           <div class="print-event-title">${e.title}</div>
           <div class="print-event-details">${details}</div>
-          ${e.description ? `<div class="print-event-desc">${e.description}</div>` : ''}
+          ${e.description ? `<div class="print-event-desc">${e.description}</div>` : ""}
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join("");
 
   return `
     <div class="print-header">
@@ -909,12 +1012,12 @@ function buildPrintHTML(events, title, subtitle) {
 }
 
 function printEvents(events, title, subtitle) {
-  const frame = document.getElementById('printFrame');
+  const frame = document.getElementById("printFrame");
   frame.innerHTML = buildPrintHTML(events, title, subtitle);
-  frame.classList.remove('hidden');
+  frame.classList.remove("hidden");
 
   // Aggiungi font per stampa
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = `
     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
     body { font-family: 'DM Sans', sans-serif !important; }
@@ -924,54 +1027,58 @@ function printEvents(events, title, subtitle) {
 
   setTimeout(() => {
     window.print();
-    frame.classList.add('hidden');
-    frame.innerHTML = '';
+    frame.classList.add("hidden");
+    frame.innerHTML = "";
   }, 300);
 }
 
 function printDay(dateStr) {
   const events = getEventsForDay(dateStr);
-  printEvents(events, formatDate(dateStr), 'Agenda del giorno');
+  printEvents(events, formatDate(dateStr), "Agenda del giorno");
 }
 
 function printSearchResults() {
   if (!state.searchResults) return;
-  printEvents(state.searchResults, `Ricerca: "${state.searchQuery}"`, 'Risultati di ricerca');
+  printEvents(
+    state.searchResults,
+    `Ricerca: "${state.searchQuery}"`,
+    "Risultati di ricerca",
+  );
 }
 
 // ──────────────── TOAST ────────────────
 function showToast(msg) {
-  const toast = document.getElementById('toast');
+  const toast = document.getElementById("toast");
   toast.textContent = msg;
-  toast.classList.remove('hidden');
-  setTimeout(() => toast.classList.add('hidden'), 3000);
+  toast.classList.remove("hidden");
+  setTimeout(() => toast.classList.add("hidden"), 3000);
 }
 
 // ──────────────── RICERCA ────────────────
 let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', e => {
+document.getElementById("searchInput").addEventListener("input", (e) => {
   clearTimeout(searchTimeout);
   const q = e.target.value.trim();
   state.searchQuery = q;
 
-  const badge  = document.getElementById('searchBadge');
-  const btnPS  = document.getElementById('btnPrintSearch');
+  const badge = document.getElementById("searchBadge");
+  const btnPS = document.getElementById("btnPrintSearch");
 
   searchTimeout = setTimeout(async () => {
     if (q.length > 1) {
-      const resp = await api('GET', `/events?search=${encodeURIComponent(q)}`);
+      const resp = await api("GET", `/events?search=${encodeURIComponent(q)}`);
       if (resp.success) {
         state.searchResults = resp.data;
         badge.textContent = `${resp.data.length} risultati`;
-        badge.classList.remove('hidden');
-        btnPS.classList.remove('hidden');
+        badge.classList.remove("hidden");
+        btnPS.classList.remove("hidden");
         await loadCategories();
-        setView('list');
+        setView("list");
       }
     } else {
       state.searchResults = null;
-      badge.classList.add('hidden');
-      btnPS.classList.add('hidden');
+      badge.classList.add("hidden");
+      btnPS.classList.add("hidden");
       await refresh();
     }
   }, 280);
@@ -980,11 +1087,11 @@ document.getElementById('searchInput').addEventListener('input', e => {
 // ──────────────── NAVIGAZIONE ────────────────
 function navigate(dir) {
   const { year, month } = getYearMonth();
-  if (state.view === 'month') {
+  if (state.view === "month") {
     state.current = new Date(year, month + dir, 1);
-  } else if (state.view === 'week') {
+  } else if (state.view === "week") {
     state.current = new Date(state.current.getTime() + dir * 7 * 86400000);
-  } else if (state.view === 'day') {
+  } else if (state.view === "day") {
     state.current = new Date(state.current.getTime() + dir * 86400000);
   } else {
     state.current = new Date(year, month + dir, 1);
@@ -994,18 +1101,28 @@ function navigate(dir) {
 
 function setView(view) {
   state.view = view;
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.getElementById('calendarMonth').classList.toggle('hidden', view !== 'month');
-  document.getElementById('calendarWeek').classList.toggle('hidden',  view !== 'week');
-  document.getElementById('calendarDay').classList.toggle('hidden',   view !== 'day');
-  document.getElementById('calendarList').classList.toggle('hidden',  view !== 'list');
+  document
+    .querySelectorAll(".view-btn")
+    .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  document
+    .getElementById("calendarMonth")
+    .classList.toggle("hidden", view !== "month");
+  document
+    .getElementById("calendarWeek")
+    .classList.toggle("hidden", view !== "week");
+  document
+    .getElementById("calendarDay")
+    .classList.toggle("hidden", view !== "day");
+  document
+    .getElementById("calendarList")
+    .classList.toggle("hidden", view !== "list");
   refresh();
 }
 
 async function refresh() {
   if (state.searchResults !== null) {
     await loadCategories();
-  } else if (state.view === 'list') {
+  } else if (state.view === "list") {
     await loadAllEvents();
     await loadCategories();
   } else {
@@ -1017,111 +1134,128 @@ async function refresh() {
 }
 
 // ──────────────── EVENT LISTENERS ────────────────
-document.getElementById('btnPrev').addEventListener('click', () => navigate(-1));
-document.getElementById('btnNext').addEventListener('click', () => navigate(1));
-document.getElementById('btnToday').addEventListener('click', () => {
+document
+  .getElementById("btnPrev")
+  .addEventListener("click", () => navigate(-1));
+document.getElementById("btnNext").addEventListener("click", () => navigate(1));
+document.getElementById("btnToday").addEventListener("click", () => {
   state.current = new Date(state.today);
-  if (state.view === 'list') setView('day'); else refresh();
+  if (state.view === "list") setView("day");
+  else refresh();
 });
-document.getElementById('btnNewEvent').addEventListener('click', () => openNewEventModal());
-document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('btnCancel').addEventListener('click', closeModal);
-document.getElementById('btnSaveEvent').addEventListener('click', saveEvent);
-document.getElementById('btnDeleteEvent').addEventListener('click', deleteEvent);
-document.getElementById('popupClose').addEventListener('click', closePopup);
-document.getElementById('fAllDay').addEventListener('change', toggleTimeRow);
+document
+  .getElementById("btnNewEvent")
+  .addEventListener("click", () => openNewEventModal());
+document.getElementById("modalClose").addEventListener("click", closeModal);
+document.getElementById("btnCancel").addEventListener("click", closeModal);
+document.getElementById("btnSaveEvent").addEventListener("click", saveEvent);
+document
+  .getElementById("btnDeleteEvent")
+  .addEventListener("click", deleteEvent);
+document.getElementById("popupClose").addEventListener("click", closePopup);
+document.getElementById("fAllDay").addEventListener("change", toggleTimeRow);
 
 // Sincronizza colore evento con colore categoria selezionata
-document.getElementById('fCategory').addEventListener('change', function () {
+document.getElementById("fCategory").addEventListener("change", function () {
   syncColorFromCategory(this.value);
 });
 
-document.querySelectorAll('.view-btn').forEach(btn => {
-  btn.addEventListener('click', () => setView(btn.dataset.view));
+document.querySelectorAll(".view-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setView(btn.dataset.view));
 });
 
-document.getElementById('modalOverlay').addEventListener('click', e => {
+document.getElementById("modalOverlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
 
-document.addEventListener('click', e => {
-  const popup = document.getElementById('eventPopup');
-  if (!popup.classList.contains('hidden') &&
-      !popup.contains(e.target) &&
-      !e.target.closest('.event-chip,.week-event-item,.list-event,.day-event-card,.btn-edit')) {
+document.addEventListener("click", (e) => {
+  const popup = document.getElementById("eventPopup");
+  if (
+    !popup.classList.contains("hidden") &&
+    !popup.contains(e.target) &&
+    !e.target.closest(
+      ".event-chip,.week-event-item,.list-event,.day-event-card,.btn-edit",
+    )
+  ) {
     closePopup();
   }
 });
 
 // Tasto ESC chiude modal/popup
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closePopup(); }
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeModal();
+    closePopup();
+  }
 });
 
 // Print buttons
-document.getElementById('btnPrintDay').addEventListener('click', () => {
+document.getElementById("btnPrintDay").addEventListener("click", () => {
   printDay(toDateStr(state.current));
 });
 
-document.getElementById('btnPrintSearch').addEventListener('click', () => {
+document.getElementById("btnPrintSearch").addEventListener("click", () => {
   printSearchResults();
 });
 
-document.getElementById('btnPrintCustomDay').addEventListener('click', () => {
-  const d = document.getElementById('printDatePicker').value;
-  if (!d) { showToast('⚠️ Scegli una data!'); return; }
+document.getElementById("btnPrintCustomDay").addEventListener("click", () => {
+  const d = document.getElementById("printDatePicker").value;
+  if (!d) {
+    showToast("⚠️ Scegli una data!");
+    return;
+  }
   printDay(d);
 });
 
 // Pre-imposta data picker al giorno corrente
-document.getElementById('printDatePicker').value = toDateStr(new Date());
+document.getElementById("printDatePicker").value = toDateStr(new Date());
 
 // Setup smart time inputs
 setupTimeInputs();
 
 // ──────────────── MOBILE DRAWER ────────────────
 (function setupMobileMenu() {
-  const btn     = document.getElementById('btnMobileMenu');
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('mobileOverlay');
+  const btn = document.getElementById("btnMobileMenu");
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("mobileOverlay");
 
   if (!btn) return;
 
   function openDrawer() {
-    sidebar.classList.add('open');
-    overlay.classList.remove('hidden');
-    btn.classList.add('open');
+    sidebar.classList.add("open");
+    overlay.classList.remove("hidden");
+    btn.classList.add("open");
   }
 
   function closeDrawer() {
-    sidebar.classList.remove('open');
-    overlay.classList.add('hidden');
-    btn.classList.remove('open');
+    sidebar.classList.remove("open");
+    overlay.classList.add("hidden");
+    btn.classList.remove("open");
   }
 
-  btn.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
+  btn.addEventListener("click", () => {
+    sidebar.classList.contains("open") ? closeDrawer() : openDrawer();
   });
 
-  overlay.addEventListener('click', closeDrawer);
-  const closeBtn = document.getElementById('btnSidebarClose');
-  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  overlay.addEventListener("click", closeDrawer);
+  const closeBtn = document.getElementById("btnSidebarClose");
+  if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
 
-  sidebar.addEventListener('click', e => {
+  sidebar.addEventListener("click", (e) => {
     if (window.innerWidth > 768) return;
-    const isMiniDay  = e.target.closest('.mini-day[data-date]');
-    const isViewBtn  = e.target.closest('.view-btn');
-    const isNewEvent = e.target.closest('.btn-new-event');
+    const isMiniDay = e.target.closest(".mini-day[data-date]");
+    const isViewBtn = e.target.closest(".view-btn");
+    const isNewEvent = e.target.closest(".btn-new-event");
     if (isMiniDay || isViewBtn || isNewEvent) {
       setTimeout(closeDrawer, 120);
     }
   });
 
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     if (window.innerWidth > 768) {
-      sidebar.classList.remove('open');
-      overlay.classList.add('hidden');
-      btn.classList.remove('open');
+      sidebar.classList.remove("open");
+      overlay.classList.add("hidden");
+      btn.classList.remove("open");
     }
   });
 })();
@@ -1129,7 +1263,7 @@ setupTimeInputs();
 // ──────────────── INIT ────────────────
 (async () => {
   await refresh();
-  console.log('🗓️ Calendario caricato!');
+  console.log("🗓️ Calendario caricato!");
 })();
 
 // ══════════════════════════════════════════════
@@ -1137,122 +1271,180 @@ setupTimeInputs();
 // ══════════════════════════════════════════════
 
 const EMOJI_LIST = [
-  '📌','💼','🌿','👨‍👩‍👧','🏥','⚽','✈️','🎂','📚','🎵',
-  '🏠','🍕','💪','🧘','🎨','💡','📝','🚗','🛒','🎬',
-  '📅','🔔','💊','🌙','☀️','🎯','🏆','💰','🌱','🤝',
-  '🎉','🐶','🏋️','🎸','📷','🧹','💻','🛫','⚽','🎂',
+  "📌",
+  "💼",
+  "🌿",
+  "👨‍👩‍👧",
+  "🏥",
+  "⚽",
+  "✈️",
+  "🎂",
+  "📚",
+  "🎵",
+  "🏠",
+  "🍕",
+  "💪",
+  "🧘",
+  "🎨",
+  "💡",
+  "📝",
+  "🚗",
+  "🛒",
+  "🎬",
+  "📅",
+  "🔔",
+  "💊",
+  "🌙",
+  "☀️",
+  "🎯",
+  "🏆",
+  "💰",
+  "🌱",
+  "🤝",
+  "🎉",
+  "🐶",
+  "🏋️",
+  "🎸",
+  "📷",
+  "🧹",
+  "💻",
+  "🛫",
+  "⚽",
+  "🎂",
 ];
 
 function openCatModal(cat = null) {
-  document.getElementById('catModalTitle').textContent = cat ? 'Modifica Categoria' : 'Nuova Categoria';
-  document.getElementById('catId').value   = cat ? cat.id : '';
-  document.getElementById('cName').value  = cat ? cat.name  : '';
-  document.getElementById('cColor').value = cat ? cat.color : '#6366f1';
-  document.getElementById('cIcon').value  = cat ? cat.icon  : '📌';
-  document.getElementById('btnDeleteCat').classList.toggle('hidden', !cat);
+  document.getElementById("catModalTitle").textContent = cat
+    ? "Modifica Categoria"
+    : "Nuova Categoria";
+  document.getElementById("catId").value = cat ? cat.id : "";
+  document.getElementById("cName").value = cat ? cat.name : "";
+  document.getElementById("cColor").value = cat ? cat.color : "#6366f1";
+  document.getElementById("cIcon").value = cat ? cat.icon : "📌";
+  document.getElementById("btnDeleteCat").classList.toggle("hidden", !cat);
 
   updateCatPreview();
-  buildEmojiGrid(cat ? cat.icon : '📌');
+  buildEmojiGrid(cat ? cat.icon : "📌");
 
-  document.getElementById('catModalOverlay').classList.remove('hidden');
-  document.getElementById('cName').focus();
+  document.getElementById("catModalOverlay").classList.remove("hidden");
+  document.getElementById("cName").focus();
 }
 
 function closeCatModal() {
-  document.getElementById('catModalOverlay').classList.add('hidden');
+  document.getElementById("catModalOverlay").classList.add("hidden");
 }
 
-function buildEmojiGrid(selected = '📌') {
-  const grid = document.getElementById('emojiGrid');
-  grid.innerHTML = EMOJI_LIST.map(e => `
-    <button type="button" class="emoji-btn ${e === selected ? 'selected' : ''}" data-emoji="${e}">${e}</button>
-  `).join('');
+function buildEmojiGrid(selected = "📌") {
+  const grid = document.getElementById("emojiGrid");
+  grid.innerHTML = EMOJI_LIST.map(
+    (e) => `
+    <button type="button" class="emoji-btn ${e === selected ? "selected" : ""}" data-emoji="${e}">${e}</button>
+  `,
+  ).join("");
 
-  grid.querySelectorAll('.emoji-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('cIcon').value = btn.dataset.emoji;
-      grid.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
+  grid.querySelectorAll(".emoji-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("cIcon").value = btn.dataset.emoji;
+      grid
+        .querySelectorAll(".emoji-btn")
+        .forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
       updateCatPreview();
     });
   });
 }
 
 function updateCatPreview() {
-  const name  = document.getElementById('cName').value  || 'Anteprima';
-  const color = document.getElementById('cColor').value || '#6366f1';
-  const icon  = document.getElementById('cIcon').value  || '📌';
-  document.getElementById('catPreviewDot').style.background = color;
-  document.getElementById('catPreviewIcon').textContent = icon;
-  document.getElementById('catPreviewName').textContent = name;
+  const name = document.getElementById("cName").value || "Anteprima";
+  const color = document.getElementById("cColor").value || "#6366f1";
+  const icon = document.getElementById("cIcon").value || "📌";
+  document.getElementById("catPreviewDot").style.background = color;
+  document.getElementById("catPreviewIcon").textContent = icon;
+  document.getElementById("catPreviewName").textContent = name;
 }
 
 async function saveCat() {
-  const id    = document.getElementById('catId').value;
-  const name  = document.getElementById('cName').value.trim();
-  const color = document.getElementById('cColor').value;
-  const icon  = document.getElementById('cIcon').value.trim() || '📌';
+  const id = document.getElementById("catId").value;
+  const name = document.getElementById("cName").value.trim();
+  const color = document.getElementById("cColor").value;
+  const icon = document.getElementById("cIcon").value.trim() || "📌";
 
-  if (!name) { showToast('⚠️ Inserisci un nome per la categoria!'); return; }
+  if (!name) {
+    showToast("⚠️ Inserisci un nome per la categoria!");
+    return;
+  }
 
   const body = { name, color, icon };
   const resp = id
-    ? await api('PUT',  `/categories/${id}`, body)
-    : await api('POST', '/categories',        body);
+    ? await api("PUT", `/categories/${id}`, body)
+    : await api("POST", "/categories", body);
 
   if (resp.success) {
-    showToast(id ? '✅ Categoria aggiornata!' : '✅ Categoria creata!');
+    showToast(id ? "✅ Categoria aggiornata!" : "✅ Categoria creata!");
     closeCatModal();
     await refresh();
 
     // Se eravamo nel modal evento, aggiorna la select e preseleziona la nuova cat
-    if (!document.getElementById('modalOverlay').classList.contains('hidden')) {
+    if (!document.getElementById("modalOverlay").classList.contains("hidden")) {
       await loadCategories();
       if (!id) {
         // preseleziona la nuova categoria appena creata
-        document.getElementById('fCategory').value = resp.data.id;
+        document.getElementById("fCategory").value = resp.data.id;
       }
     }
   } else {
-    showToast('❌ ' + resp.error);
+    showToast("❌ " + resp.error);
   }
 }
 
 async function deleteCat() {
-  const id   = document.getElementById('catId').value;
-  const name = document.getElementById('cName').value;
+  const id = document.getElementById("catId").value;
+  const name = document.getElementById("cName").value;
   if (!id) return;
-  if (!confirm(`Eliminare la categoria "${name}"?\nGli eventi associati rimarranno senza categoria.`)) return;
+  if (
+    !confirm(
+      `Eliminare la categoria "${name}"?\nGli eventi associati rimarranno senza categoria.`,
+    )
+  )
+    return;
 
-  const resp = await api('DELETE', `/categories/${id}`);
+  const resp = await api("DELETE", `/categories/${id}`);
   if (resp.success) {
-    showToast('🗑 Categoria eliminata');
+    showToast("🗑 Categoria eliminata");
     closeCatModal();
     await refresh();
   } else {
-    showToast('❌ ' + resp.error);
+    showToast("❌ " + resp.error);
   }
 }
 
 // Event listeners categorie
-document.getElementById('btnAddCategory').addEventListener('click', () => openCatModal());
-document.getElementById('catModalClose').addEventListener('click', closeCatModal);
-document.getElementById('btnCatCancel').addEventListener('click', closeCatModal);
-document.getElementById('btnSaveCat').addEventListener('click', saveCat);
-document.getElementById('btnDeleteCat').addEventListener('click', deleteCat);
+document
+  .getElementById("btnAddCategory")
+  .addEventListener("click", () => openCatModal());
+document
+  .getElementById("catModalClose")
+  .addEventListener("click", closeCatModal);
+document
+  .getElementById("btnCatCancel")
+  .addEventListener("click", closeCatModal);
+document.getElementById("btnSaveCat").addEventListener("click", saveCat);
+document.getElementById("btnDeleteCat").addEventListener("click", deleteCat);
 
 // Preview live su input
-document.getElementById('cName').addEventListener('input',  updateCatPreview);
-document.getElementById('cColor').addEventListener('input', updateCatPreview);
-document.getElementById('cIcon').addEventListener('input',  updateCatPreview);
+document.getElementById("cName").addEventListener("input", updateCatPreview);
+document.getElementById("cColor").addEventListener("input", updateCatPreview);
+document.getElementById("cIcon").addEventListener("input", updateCatPreview);
 
 // Chiudi modal cat cliccando fuori
-document.getElementById('catModalOverlay').addEventListener('click', e => {
+document.getElementById("catModalOverlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) closeCatModal();
 });
 
 // Pulsante "+ nuova" dentro modal evento → apri modal categoria senza chiudere l'evento
-document.getElementById('btnQuickAddCat').addEventListener('click', () => openCatModal());
+document
+  .getElementById("btnQuickAddCat")
+  .addEventListener("click", () => openCatModal());
 
 // ══════════════════════════════════════════════
 //  SOCKET.IO — aggiornamenti real-time
@@ -1273,12 +1465,21 @@ document.getElementById('btnQuickAddCat').addEventListener('click', () => openCa
     });
 
     // Aggiorna calendario quando un altro client crea/modifica/elimina
-    socket.on("event:created",  () => refresh());
-    socket.on("event:updated",  () => refresh());
-    socket.on("event:deleted",  () => refresh());
-    socket.on("category:created", () => { refresh(); loadCategories(); });
-    socket.on("category:updated", () => { refresh(); loadCategories(); });
-    socket.on("category:deleted", () => { refresh(); loadCategories(); });
+    socket.on("event:created", () => refresh());
+    socket.on("event:updated", () => refresh());
+    socket.on("event:deleted", () => refresh());
+    socket.on("category:created", () => {
+      refresh();
+      loadCategories();
+    });
+    socket.on("category:updated", () => {
+      refresh();
+      loadCategories();
+    });
+    socket.on("category:deleted", () => {
+      refresh();
+      loadCategories();
+    });
   };
   document.head.appendChild(script);
 })();

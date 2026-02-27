@@ -1,17 +1,23 @@
 const express = require("express");
-const router  = express.Router();
+const router = express.Router();
 const plain = (rows) => JSON.parse(JSON.stringify(rows));
 
 // GET /api/categories
 router.get("/", (req, res) => {
   const db = req.app.locals.db;
   try {
-    const cats = plain(db.prepare(`
+    const cats = plain(
+      db
+        .prepare(
+          `
       SELECT c.*, COUNT(e.id) as event_count
       FROM categories c
       LEFT JOIN events e ON e.category_id = c.id
       GROUP BY c.id ORDER BY c.name ASC
-    `).all());
+    `,
+        )
+        .all(),
+    );
     res.json({ success: true, data: cats });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -20,9 +26,16 @@ router.get("/", (req, res) => {
 
 // GET /api/categories/:id
 router.get("/:id", (req, res) => {
-  const db  = req.app.locals.db;
-  const cat = plain(db.prepare("SELECT * FROM categories WHERE id = ?").get(Number(req.params.id)));
-  if (!cat) return res.status(404).json({ success: false, error: "Categoria non trovata" });
+  const db = req.app.locals.db;
+  const cat = plain(
+    db
+      .prepare("SELECT * FROM categories WHERE id = ?")
+      .get(Number(req.params.id)),
+  );
+  if (!cat)
+    return res
+      .status(404)
+      .json({ success: false, error: "Categoria non trovata" });
   res.json({ success: true, data: cat });
 });
 
@@ -31,15 +44,24 @@ router.post("/", (req, res) => {
   const db = req.app.locals.db;
   const io = req.app.get("io");
   const { name, color, icon } = req.body;
-  if (!name) return res.status(400).json({ success: false, error: "Nome obbligatorio" });
+  if (!name)
+    return res.status(400).json({ success: false, error: "Nome obbligatorio" });
   try {
-    const result = db.prepare("INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)").run(name, color||"#6366f1", icon||"📌");
-    const cat    = plain(db.prepare("SELECT * FROM categories WHERE id = ?").get(result.lastInsertRowid));
+    const result = db
+      .prepare("INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)")
+      .run(name, color || "#6366f1", icon || "📌");
+    const cat = plain(
+      db
+        .prepare("SELECT * FROM categories WHERE id = ?")
+        .get(result.lastInsertRowid),
+    );
     io.emit("category:created", cat);
     res.status(201).json({ success: true, data: cat });
   } catch (err) {
     if (err.message.includes("UNIQUE"))
-      return res.status(409).json({ success: false, error: "Categoria già esistente" });
+      return res
+        .status(409)
+        .json({ success: false, error: "Categoria già esistente" });
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -49,11 +71,25 @@ router.put("/:id", (req, res) => {
   const db = req.app.locals.db;
   const io = req.app.get("io");
   const { name, color, icon } = req.body;
-  const existing = db.prepare("SELECT id FROM categories WHERE id = ?").get(Number(req.params.id));
-  if (!existing) return res.status(404).json({ success: false, error: "Categoria non trovata" });
+  const existing = db
+    .prepare("SELECT id FROM categories WHERE id = ?")
+    .get(Number(req.params.id));
+  if (!existing)
+    return res
+      .status(404)
+      .json({ success: false, error: "Categoria non trovata" });
   try {
-    db.prepare("UPDATE categories SET name=?, color=?, icon=? WHERE id=?").run(name, color, icon, Number(req.params.id));
-    const updated = plain(db.prepare("SELECT * FROM categories WHERE id = ?").get(Number(req.params.id)));
+    db.prepare("UPDATE categories SET name=?, color=?, icon=? WHERE id=?").run(
+      name,
+      color,
+      icon,
+      Number(req.params.id),
+    );
+    const updated = plain(
+      db
+        .prepare("SELECT * FROM categories WHERE id = ?")
+        .get(Number(req.params.id)),
+    );
     io.emit("category:updated", updated);
     res.json({ success: true, data: updated });
   } catch (err) {
@@ -65,9 +101,13 @@ router.put("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   const db = req.app.locals.db;
   const io = req.app.get("io");
-  const result = db.prepare("DELETE FROM categories WHERE id = ?").run(Number(req.params.id));
+  const result = db
+    .prepare("DELETE FROM categories WHERE id = ?")
+    .run(Number(req.params.id));
   if (result.changes === 0)
-    return res.status(404).json({ success: false, error: "Categoria non trovata" });
+    return res
+      .status(404)
+      .json({ success: false, error: "Categoria non trovata" });
   io.emit("category:deleted", { id: Number(req.params.id) });
   res.json({ success: true, message: "Categoria eliminata" });
 });

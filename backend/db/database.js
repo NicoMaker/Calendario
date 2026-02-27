@@ -1,14 +1,14 @@
-const { DatabaseSync } = require('node:sqlite');
-const path = require('path');
-const fs   = require('fs');
+const { DatabaseSync } = require("node:sqlite");
+const path = require("path");
+const fs = require("fs");
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'calendario.db');
+const DB_PATH = path.join(__dirname, "..", "data", "calendario.db");
 
 function initDB() {
   const dataDir = path.dirname(DB_PATH);
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
-    console.log('📁 Cartella data creata.');
+    console.log("📁 Cartella data creata.");
   }
 
   const isNewDB = !fs.existsSync(DB_PATH);
@@ -45,9 +45,9 @@ function initDB() {
   `);
 
   if (isNewDB) {
-    console.log('✅ Database creato con successo:', DB_PATH);
+    console.log("✅ Database creato con successo:", DB_PATH);
   } else {
-    console.log('✅ Database esistente caricato:', DB_PATH);
+    console.log("✅ Database esistente caricato:", DB_PATH);
   }
 
   return db;
