@@ -1049,8 +1049,8 @@ body {
 
 /* ─────────────────── RESPONSIVE ─────────────────── */
 @media (max-width: 768px) {
-  :root { --sidebar-w: 0px; }
-  /* .sidebar gestita dal drawer — non usare display:none */
+  :root { --sidebar-w: 0; }
+  .sidebar { display: none; }
   .days-grid { gap: 2px; }
   .day-cell { padding: 4px; }
   .current-period { font-size: 18px; min-width: 160px; }
@@ -1566,17 +1566,21 @@ body {
   /* Sidebar: drawer fisso, sempre fuori dal flusso su mobile */
   .sidebar {
     display: flex !important;
+    flex-direction: column !important;
     position: fixed !important;
     top: 0 !important;
     left: -105vw !important;
     bottom: 0 !important;
-    height: 100% !important;
-    width: 85vw !important;
-    max-width: 320px !important;
+    height: 100dvh !important;
+    width: 88vw !important;
+    max-width: 340px !important;
     z-index: 400 !important;
     transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow-y: auto !important;
-    box-shadow: 6px 0 40px rgba(0,0,0,0.5) !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-shadow: 8px 0 48px rgba(0,0,0,0.6) !important;
+    padding-bottom: 32px !important;
   }
 
   .sidebar.open {
@@ -1712,5 +1716,12 @@ body {
   .event-chip {
     font-size: 10px;
     padding: 1px 5px;
+  }
+
+  /* sidebar-bottom non deve usare margin-top:auto su mobile,
+     altrimenti impedisce lo scroll */
+  .sidebar .sidebar-bottom {
+    margin-top: 24px !important;
+    padding-top: 16px;
   }
 }
