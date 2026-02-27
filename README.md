@@ -80,10 +80,3 @@ POST   /api/categories          Crea categoria
 PUT    /api/categories/:id      Modifica categoria
 DELETE /api/categories/:id      Elimina categoria
 ```
-
----
-
-## ⚠️ Problema su Windows con `better-sqlite3`?
-
-Questo progetto **NON usa** `better-sqlite3` — usa `node:sqlite` nativo.  
-Se hai una versione precedente con quel problema, usa questo zip aggiornato.
