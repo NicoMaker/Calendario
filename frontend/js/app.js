@@ -725,11 +725,7 @@ function openEditEventModal(event) {
   document.getElementById('fLocation').value = event.location || '';
   document.getElementById('fCategory').value = event.category_id || '';
   // Usa il colore specifico dell'evento se esiste, altrimenti prende quello della categoria
-  if (event.color && event.color !== '#4f46e5') {
-    document.getElementById('fColor').value = event.color || '#ffffff';
-  } else {
-    syncColorFromCategory(event.category_id);
-  }
+  syncColorFromCategory(event.category_id);
   document.getElementById('fDescription').value = event.description || '';
   document.getElementById('fAllDay').checked = !!event.all_day;
   toggleTimeRow();
@@ -1062,7 +1058,6 @@ setupTimeInputs();
   });
 
   overlay.addEventListener('click', closeDrawer);
-
   const closeBtn = document.getElementById('btnSidebarClose');
   if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
 
