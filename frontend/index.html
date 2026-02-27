@@ -57,8 +57,22 @@
     </div>
   </aside>
 
+  <!-- MOBILE OVERLAY -->
+  <div class="mobile-overlay hidden" id="mobileOverlay"></div>
+
   <!-- MAIN CONTENT -->
   <main class="main">
+    <!-- MOBILE TOP BAR -->
+    <div class="mobile-topbar">
+      <div class="mobile-logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">Planner</span>
+      </div>
+      <button class="mobile-menu-btn" id="btnMobileMenu" aria-label="Apri menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
     <header class="main-header">
       <div class="nav-controls">
         <button class="nav-btn" id="btnPrev">‹</button>
@@ -140,12 +154,12 @@
           <div class="form-row" id="timeRow">
             <div class="form-group">
               <label>Ora inizio</label>
-              <input type="text" id="fStartTime" placeholder="es. 8 oppure 14:30" autocomplete="off">
+              <input type="time" id="fStartTime">
               <span class="field-hint" id="startTimeHint"></span>
             </div>
             <div class="form-group">
               <label>Ora fine</label>
-              <input type="text" id="fEndTime" placeholder="es. 9 oppure 16:00" autocomplete="off">
+              <input type="time" id="fEndTime">
               <span class="field-hint" id="endTimeHint"></span>
             </div>
           </div>

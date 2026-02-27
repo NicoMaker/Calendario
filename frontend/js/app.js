@@ -158,54 +158,28 @@ function timeToMinutes(timeStr) {
 function setupTimeInputs() {
   const startInput = document.getElementById('fStartTime');
   const endInput   = document.getElementById('fEndTime');
-  const startHint  = document.getElementById('startTimeHint');
+  // startHint no longer needed with native time picker
+  // const startHint  = document.getElementById('startTimeHint');
   const endHint    = document.getElementById('endTimeHint');
 
-  function handleStartBlur() {
-    const norm = normalizeTime(startInput.value);
-    if (norm === null) {
-      startHint.textContent = '⚠ Orario non valido';
-      return;
+  // Auto-compila ora fine (+1h) quando l'utente imposta l'ora di inizio
+  startInput.addEventListener('change', () => {
+    const val = startInput.value;
+    if (val && !endInput.value) {
+      endInput.value = addOneHour(val);
     }
-    if (norm) {
-      startInput.value = norm;
-      startHint.textContent = '✓ ' + norm;
-      // Auto-compila ora fine se vuota
-      if (!endInput.value.trim()) {
-        const autoEnd = addOneHour(norm);
-        endInput.value = autoEnd;
-        endHint.textContent = '✓ ' + autoEnd + ' (auto)';
-      }
-    } else {
-      startHint.textContent = '';
-    }
-  }
+  });
 
-  function handleEndBlur() {
-    const norm = normalizeTime(endInput.value);
-    if (norm === null) {
-      endHint.textContent = '⚠ Orario non valido';
-      return;
-    }
-    if (norm) {
-      endInput.value = norm;
-      const startNorm = normalizeTime(startInput.value);
-      if (startNorm && timeToMinutes(norm) <= timeToMinutes(startNorm)) {
-        endHint.textContent = '⚠ Deve essere dopo le ' + startNorm;
-      } else {
-        endHint.textContent = '✓ ' + norm;
-      }
+  // Segnala se l'ora di fine è prima di quella di inizio
+  endInput.addEventListener('change', () => {
+    const s = startInput.value;
+    const e = endInput.value;
+    if (s && e && timeToMinutes(e) <= timeToMinutes(s)) {
+      endHint.textContent = '⚠ Deve essere dopo le ' + s;
     } else {
       endHint.textContent = '';
     }
-  }
-
-  startInput.addEventListener('blur', handleStartBlur);
-  endInput.addEventListener('blur', handleEndBlur);
-
-  // Reset hint on focus
-  startInput.addEventListener('focus', () => startHint.textContent = '');
-  endInput.addEventListener('focus', () => endHint.textContent = '');
+  });
 }
 
 // ──────────────── MINI CALENDAR ────────────────
@@ -729,6 +703,14 @@ function openNewEventModal(dateStr = null) {
   document.getElementById('fTitle').focus();
 }
 
+function syncColorFromCategory(catId) {
+  if (!catId) return;
+  const cat = state.categories.find(c => String(c.id) === String(catId));
+  if (cat && cat.color) {
+    document.getElementById('fColor').value = cat.color;
+  }
+}
+
 function openEditEventModal(event) {
   resetForm();
   document.getElementById('modalTitle').textContent = 'Modifica Evento';
@@ -741,7 +723,12 @@ function openEditEventModal(event) {
   document.getElementById('fEndTime').value = event.end_time || '';
   document.getElementById('fLocation').value = event.location || '';
   document.getElementById('fCategory').value = event.category_id || '';
-  document.getElementById('fColor').value = event.color || getEventColor(event);
+  // Usa il colore specifico dell'evento se esiste, altrimenti prende quello della categoria
+  if (event.color && event.color !== '#4f46e5') {
+    document.getElementById('fColor').value = event.color;
+  } else {
+    syncColorFromCategory(event.category_id);
+  }
   document.getElementById('fDescription').value = event.description || '';
   document.getElementById('fAllDay').checked = !!event.all_day;
   toggleTimeRow();
@@ -758,7 +745,6 @@ function resetForm() {
   document.getElementById('eventId').value = '';
   document.getElementById('fColor').value = '#4f46e5';
   document.getElementById('timeRow').style.display = '';
-  document.getElementById('startTimeHint').textContent = '';
   document.getElementById('endTimeHint').textContent = '';
 }
 
@@ -770,23 +756,13 @@ function toggleTimeRow() {
 async function saveEvent() {
   const id = document.getElementById('eventId').value;
 
-  const rawStart = document.getElementById('fStartTime').value.trim();
-  const rawEnd   = document.getElementById('fEndTime').value.trim();
-  const startTime = rawStart ? normalizeTime(rawStart) : null;
-  const endTime   = rawEnd   ? normalizeTime(rawEnd)   : null;
-  const allDay = document.getElementById('fAllDay').checked;
+  const startTime = document.getElementById('fStartTime').value || null;
+  const endTime   = document.getElementById('fEndTime').value   || null;
+  const allDay    = document.getElementById('fAllDay').checked;
 
   // Validazione orari
-  if (!allDay) {
-    if (rawStart && startTime === null) {
-      showToast('⚠️ Ora di inizio non valida!'); return;
-    }
-    if (rawEnd && endTime === null) {
-      showToast('⚠️ Ora di fine non valida!'); return;
-    }
-    if (startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
-      showToast('⚠️ L\'ora di fine deve essere dopo l\'ora di inizio!'); return;
-    }
+  if (!allDay && startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+    showToast('⚠️ L\'ora di fine deve essere dopo l\'ora di inizio!'); return;
   }
 
   const body = {
@@ -1012,6 +988,11 @@ document.getElementById('btnDeleteEvent').addEventListener('click', deleteEvent)
 document.getElementById('popupClose').addEventListener('click', closePopup);
 document.getElementById('fAllDay').addEventListener('change', toggleTimeRow);
 
+// Sincronizza colore evento con colore categoria selezionata
+document.getElementById('fCategory').addEventListener('change', function () {
+  syncColorFromCategory(this.value);
+});
+
 document.querySelectorAll('.view-btn').forEach(btn => {
   btn.addEventListener('click', () => setView(btn.dataset.view));
 });
@@ -1054,6 +1035,51 @@ document.getElementById('printDatePicker').value = toDateStr(new Date());
 
 // Setup smart time inputs
 setupTimeInputs();
+
+// ──────────────── MOBILE DRAWER ────────────────
+(function setupMobileMenu() {
+  const btn     = document.getElementById('btnMobileMenu');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobileOverlay');
+
+  if (!btn) return;
+
+  function openDrawer() {
+    sidebar.classList.add('open');
+    overlay.classList.remove('hidden');
+    btn.classList.add('open');
+  }
+
+  function closeDrawer() {
+    sidebar.classList.remove('open');
+    overlay.classList.add('hidden');
+    btn.classList.remove('open');
+  }
+
+  btn.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
+  });
+
+  overlay.addEventListener('click', closeDrawer);
+
+  sidebar.addEventListener('click', e => {
+    if (window.innerWidth > 768) return;
+    const isMiniDay  = e.target.closest('.mini-day[data-date]');
+    const isViewBtn  = e.target.closest('.view-btn');
+    const isNewEvent = e.target.closest('.btn-new-event');
+    if (isMiniDay || isViewBtn || isNewEvent) {
+      setTimeout(closeDrawer, 120);
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      sidebar.classList.remove('open');
+      overlay.classList.add('hidden');
+      btn.classList.remove('open');
+    }
+  });
+})();
 
 // ──────────────── INIT ────────────────
 (async () => {
