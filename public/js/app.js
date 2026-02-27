@@ -11,9 +11,10 @@ const state = {
   view: 'month',
   events: [],
   categories: [],
-  selectedCategoryFilter: null,
+  // null = tutte, Set vuoto = nessuna, Set con id = quelle selezionate
+  selectedCategories: null,
   searchQuery: '',
-  searchResults: null, // null = non in ricerca, array = risultati
+  searchResults: null,
 };
 
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
@@ -31,16 +32,13 @@ async function api(method, path, body = null) {
 
 async function loadEvents() {
   const { year, month } = getYearMonth();
-  let url = `/events?year=${year}&month=${month+1}`;
-  if (state.selectedCategoryFilter) url += `&category_id=${state.selectedCategoryFilter}`;
+  const url = `/events?year=${year}&month=${month+1}`;
   const resp = await api('GET', url);
   if (resp.success) state.events = resp.data;
 }
 
 async function loadAllEvents() {
-  let url = '/events';
-  if (state.selectedCategoryFilter) url += `?category_id=${state.selectedCategoryFilter}`;
-  const resp = await api('GET', url);
+  const resp = await api('GET', '/events');
   if (resp.success) state.events = resp.data;
 }
 
@@ -80,7 +78,7 @@ function formatDateShort(dateStr) {
 }
 
 function getEventsForDay(dateStr) {
-  const src = state.searchResults !== null ? state.searchResults : state.events;
+  const src = filterEvents(state.searchResults !== null ? state.searchResults : state.events);
   return src.filter(e => {
     if (e.start_date === dateStr) return true;
     if (e.end_date && e.start_date <= dateStr && e.end_date >= dateStr) return true;
@@ -92,6 +90,15 @@ function getEventColor(event) {
   if (event.color) return event.color;
   if (event.category_color) return event.category_color;
   return '#6366f1';
+}
+
+// Applica filtro categorie agli eventi
+// null = tutte, Set vuoto = nessuna, Set con id = solo quelle selezionate
+function filterEvents(events) {
+  const f = state.selectedCategories;
+  if (f === null) return events;                              // tutte
+  if (f.size === 0) return [];                                // nessuna
+  return events.filter(e => f.has(String(e.category_id ?? '')));
 }
 
 // ──────────────── TIME AUTO-COMPLETE ────────────────
@@ -265,34 +272,108 @@ function renderMiniCal() {
 
 // ──────────────── CATEGORY LIST ────────────────
 function renderCategoryList() {
-  const list = document.getElementById('categoryList');
-  const evSrc = state.searchResults !== null ? state.searchResults : state.events;
+  const list   = document.getElementById('categoryList');
+  const f      = state.selectedCategories;
+  const isAll  = f === null;
+  const isNone = f instanceof Set && f.size === 0;
+
+  // Conta eventi visibili dopo filtro
+  const allEvSrc = state.searchResults !== null ? state.searchResults : state.events;
+  const visibleEvents = filterEvents(allEvSrc);
+
+  // Aggiorna badge filtro attivo
+  const badge = document.getElementById('catFilterBadge');
+  if (f === null) {
+    badge.classList.add('hidden');
+  } else if (f.size === 0) {
+    badge.textContent = '0';
+    badge.classList.remove('hidden');
+  } else {
+    badge.textContent = f.size;
+    badge.classList.remove('hidden');
+  }
+
   list.innerHTML = `
-    <li class="category-item ${!state.selectedCategoryFilter ? 'active' : ''}" data-id="">
-      <span class="cat-dot" style="background:#6b6560"></span>
+    <!-- TUTTE -->
+    <li class="category-item cat-special ${isAll ? 'active' : ''}" data-action="all">
+      <span class="cat-dot" style="background:linear-gradient(135deg,#6b6560,#9c9590)"></span>
       <span class="cat-name">Tutte</span>
-      <span class="cat-count">${evSrc.length}</span>
+      <span class="cat-count">${allEvSrc.length}</span>
     </li>
-    ${state.categories.map(c => `
-      <li class="category-item ${state.selectedCategoryFilter == c.id ? 'active' : ''}" data-id="${c.id}">
-        <span class="cat-dot" style="background:${c.color}"></span>
-        <span class="cat-name">${c.icon} ${c.name}</span>
-        <span class="cat-count">${c.event_count}</span>
-        <button class="cat-edit-btn" data-cat-id="${c.id}" title="Modifica">✏</button>
-      </li>
-    `).join('')}
+
+    <!-- NESSUNA -->
+    <li class="category-item cat-special ${isNone ? 'active active-none' : ''}" data-action="none">
+      <span class="cat-dot" style="background:#d1d5db;border:1px dashed #9ca3af"></span>
+      <span class="cat-name">Nessuna</span>
+      <span class="cat-count">0</span>
+    </li>
+
+    <li class="cat-separator"></li>
+
+    ${state.categories.map(c => {
+      const isSelected = isAll
+        ? true
+        : (f instanceof Set ? f.has(String(c.id)) : false);
+      return `
+        <li class="category-item ${isSelected && !isNone ? 'active' : 'inactive'}" data-id="${c.id}">
+          <span class="cat-check">${isSelected && !isNone ? '✓' : ''}</span>
+          <span class="cat-dot" style="background:${c.color}"></span>
+          <span class="cat-name">${c.icon} ${c.name}</span>
+          <span class="cat-count">${c.event_count}</span>
+          <button class="cat-edit-btn" data-cat-id="${c.id}" title="Modifica">✏</button>
+        </li>
+      `;
+    }).join('')}
   `;
 
-  // Click su item → filtra
-  list.querySelectorAll('.category-item').forEach(item => {
+  // Click su "Tutte"
+  list.querySelector('[data-action="all"]').addEventListener('click', () => {
+    state.selectedCategories = null;
+    renderCategoryList();
+    renderCurrentView();
+  });
+
+  // Click su "Nessuna"
+  list.querySelector('[data-action="none"]').addEventListener('click', () => {
+    state.selectedCategories = new Set();
+    renderCategoryList();
+    renderCurrentView();
+  });
+
+  // Click su singola categoria
+  list.querySelectorAll('.category-item[data-id]').forEach(item => {
     item.addEventListener('click', e => {
-      if (e.target.closest('.cat-edit-btn')) return; // gestito sotto
-      state.selectedCategoryFilter = item.dataset.id || null;
-      refresh();
+      if (e.target.closest('.cat-edit-btn')) return;
+
+      const id = String(item.dataset.id);
+
+      if (isAll) {
+        // Da "tutte" → deseleziona quella cliccata (le altre restano attive)
+        const newSet = new Set(state.categories.map(c => String(c.id)));
+        newSet.delete(id);
+        state.selectedCategories = newSet;
+      } else if (f instanceof Set) {
+        const newSet = new Set(f);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+        }
+        // Se tutte selezionate → torna a null (Tutte)
+        const allIds = state.categories.map(c => String(c.id));
+        if (newSet.size === allIds.length && allIds.every(i => newSet.has(i))) {
+          state.selectedCategories = null;
+        } else {
+          state.selectedCategories = newSet;
+        }
+      }
+
+      renderCategoryList();
+      renderCurrentView();
     });
   });
 
-  // Click su bottone edit → apri modal categoria
+  // Click edit categoria
   list.querySelectorAll('.cat-edit-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -306,7 +387,16 @@ function renderCategoryList() {
   const prevVal = select.value;
   select.innerHTML = `<option value="">Nessuna</option>` +
     state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-  if (prevVal) select.value = prevVal; // mantieni selezione
+  if (prevVal) select.value = prevVal;
+}
+
+// Renderizza la vista corrente senza ricaricare dal server
+function renderCurrentView() {
+  if (state.view === 'month')     renderMonth();
+  else if (state.view === 'week') renderWeek();
+  else if (state.view === 'day')  renderDay();
+  else                            renderList();
+  renderMiniCal();
 }
 
 // ──────────────── MONTH VIEW ────────────────
@@ -519,7 +609,7 @@ function renderList() {
     document.getElementById('currentPeriod').textContent = 'Tutti gli eventi';
   }
 
-  const src = isSearch ? state.searchResults : state.events;
+  const src = filterEvents(isSearch ? state.searchResults : state.events);
   const container = document.getElementById('listContainer');
 
   if (!src.length) {
@@ -895,7 +985,6 @@ function setView(view) {
 
 async function refresh() {
   if (state.searchResults !== null) {
-    // In modalità ricerca, non ricaricare eventi (usiamo searchResults)
     await loadCategories();
   } else if (state.view === 'list') {
     await loadAllEvents();
@@ -905,12 +994,7 @@ async function refresh() {
     await loadCategories();
   }
 
-  if (state.view === 'month')     renderMonth();
-  else if (state.view === 'week') renderWeek();
-  else if (state.view === 'day')  renderDay();
-  else                            renderList();
-
-  renderMiniCal();
+  renderCurrentView();
 }
 
 // ──────────────── EVENT LISTENERS ────────────────

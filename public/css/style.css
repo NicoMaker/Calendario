@@ -1491,3 +1491,51 @@ body {
   text-underline-offset: 2px;
 }
 .btn-inline-link:hover { color: var(--accent-hover); }
+
+/* ─────────────────── CATEGORY MULTI-SELECT ─────────────────── */
+
+.cat-separator {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 6px 0;
+  list-style: none;
+}
+
+/* Stato inattivo — opaco */
+.category-item.inactive {
+  opacity: 0.4;
+}
+.category-item.inactive:hover {
+  opacity: 0.85;
+}
+
+/* Checkmark visibile */
+.cat-check {
+  width: 14px;
+  font-size: 10px;
+  color: #6ee7b7;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* "Nessuna" quando attiva */
+.category-item.active-none {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.category-item.active-none .cat-name {
+  color: #fca5a5 !important;
+}
+
+/* Pill badge che mostra quante cat. sono selezionate */
+.cat-filter-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
