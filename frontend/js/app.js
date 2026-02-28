@@ -326,6 +326,7 @@ function renderCategoryList() {
           <span class="cat-name">${c.icon} ${c.name}</span>
           <span class="cat-count">${c.event_count}</span>
           <button class="cat-edit-btn" data-cat-id="${c.id}" title="Modifica">✏</button>
+          <button class="cat-delete-btn" data-cat-id="${c.id}" title="Elimina">🗑</button>
         </li>
       `;
       })
@@ -350,6 +351,7 @@ function renderCategoryList() {
   list.querySelectorAll(".category-item[data-id]").forEach((item) => {
     item.addEventListener("click", (e) => {
       if (e.target.closest(".cat-edit-btn")) return;
+      if (e.target.closest(".cat-delete-btn")) return;
 
       const id = String(item.dataset.id);
 
@@ -388,6 +390,23 @@ function renderCategoryList() {
       e.stopPropagation();
       const cat = state.categories.find((c) => c.id == btn.dataset.catId);
       if (cat) openCatModal(cat);
+    });
+  });
+
+  // Click delete categoria direttamente dalla lista
+  list.querySelectorAll(".cat-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const cat = state.categories.find((c) => c.id == btn.dataset.catId);
+      if (!cat) return;
+      if (!confirm(`Eliminare la categoria "${cat.name}"?\nGli eventi associati rimarranno senza categoria.`)) return;
+      const resp = await api("DELETE", `/categories/${cat.id}`);
+      if (resp.success) {
+        showToast("🗑 Categoria eliminata");
+        await refresh();
+      } else {
+        showToast("❌ " + resp.error);
+      }
     });
   });
 
@@ -1218,6 +1237,7 @@ setupTimeInputs();
   const btn = document.getElementById("btnMobileMenu");
   const sidebar = document.querySelector(".sidebar");
   const overlay = document.getElementById("mobileOverlay");
+  const mobileCloseBtn = document.getElementById("btnMobileClose");
 
   if (!btn) return;
 
@@ -1225,12 +1245,14 @@ setupTimeInputs();
     sidebar.classList.add("open");
     overlay.classList.remove("hidden");
     btn.classList.add("open");
+    if (mobileCloseBtn) mobileCloseBtn.classList.remove("hidden");
   }
 
   function closeDrawer() {
     sidebar.classList.remove("open");
     overlay.classList.add("hidden");
     btn.classList.remove("open");
+    if (mobileCloseBtn) mobileCloseBtn.classList.add("hidden");
   }
 
   btn.addEventListener("click", () => {
@@ -1240,6 +1262,7 @@ setupTimeInputs();
   overlay.addEventListener("click", closeDrawer);
   const closeBtn = document.getElementById("btnSidebarClose");
   if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
+  if (mobileCloseBtn) mobileCloseBtn.addEventListener("click", closeDrawer);
 
   sidebar.addEventListener("click", (e) => {
     if (window.innerWidth > 768) return;

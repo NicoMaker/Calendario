@@ -88,10 +88,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: -24px;
+  margin-top: -24px;
+  padding-top: 24px;
+  padding-bottom: 12px;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  background: var(--bg-sidebar);
+  z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 .sidebar-close-btn {
-  display: none;
+  display: flex;
   width: 32px;
   height: 32px;
   background: rgba(255, 255, 255, 0.08);
@@ -1897,6 +1909,59 @@ body {
     padding: 1px 5px;
   }
 }
+/* ─────────────────── CAT DELETE BUTTON in sidebar ─────────────────── */
+.cat-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-sidebar-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition:
+    opacity var(--transition),
+    color var(--transition),
+    background var(--transition);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.category-item:hover .cat-delete-btn {
+  opacity: 1;
+}
+.cat-delete-btn:hover {
+  color: #e05555;
+  background: rgba(224, 85, 85, 0.15);
+}
+
+/* Mobile: always show delete btn */
+@media (max-width: 768px) {
+  .cat-delete-btn {
+    opacity: 0.6;
+  }
+}
+
+/* Mobile topbar: X button */
+.mobile-topbar-x {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #e8e4dc;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.mobile-topbar-x:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 /* ─────────────────── INLINE ACTIONS (giorno/settimana/lista) ─────────────────── */
 .event-actions {
   display: flex;
