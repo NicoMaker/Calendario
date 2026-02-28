@@ -1003,7 +1003,7 @@ async function deleteEvent(directId) {
 }
 
 // ──────────────── STAMPA ────────────────
-function buildPrintHTML(events, title, subtitle) {
+function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("it-IT", {
     weekday: "long",
@@ -1012,7 +1012,7 @@ function buildPrintHTML(events, title, subtitle) {
     day: "numeric",
   });
 
-  if (!events.length) {
+  if (!events.length && !rangeFrom) {
     return `
       <div class="print-header">
         <div><div class="print-title">${title}</div><div class="print-subtitle">${subtitle}</div></div>
@@ -1031,36 +1031,73 @@ function buildPrintHTML(events, title, subtitle) {
     return ta.localeCompare(tb);
   });
 
-  const rows = sorted
-    .map((e) => {
-      const color = getEventColor(e);
-      const timeLabel = e.all_day
-        ? "Tutto il giorno"
-        : e.start_time
-          ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
-          : "—";
-      const details = [
-        e.category_name ? `${e.category_icon} ${e.category_name}` : "",
-        e.location ? `📍 ${e.location}` : "",
-        formatDate(e.start_date) +
-          (e.end_date && e.end_date !== e.start_date
-            ? ` → ${formatDateShort(e.end_date)}`
-            : ""),
-      ]
-        .filter(Boolean)
-        .join("  ·  ");
+  // Raggruppa per start_date
+  const byDay = {};
+  sorted.forEach((e) => {
+    const key = e.start_date;
+    if (!byDay[key]) byDay[key] = [];
+    byDay[key].push(e);
+  });
 
-      return `
-      <div class="print-event-row">
-        <div class="print-event-time">${timeLabel}</div>
-        <div class="print-event-dot" style="background:${color}"></div>
-        <div class="print-event-body">
-          <div class="print-event-title">${e.title}</div>
-          <div class="print-event-details">${details}</div>
-          ${e.description ? `<div class="print-event-desc">${e.description}</div>` : ""}
-        </div>
-      </div>
-    `;
+  // Se è un intervallo, genera tutti i giorni (anche quelli senza eventi)
+  let dayKeys;
+  if (rangeFrom && rangeTo) {
+    dayKeys = [];
+    const cur = parseDate(rangeFrom);
+    const end = parseDate(rangeTo);
+    while (cur <= end) {
+      const k = toDateStr(cur);
+      if (!byDay[k]) byDay[k] = [];
+      dayKeys.push(k);
+      cur.setDate(cur.getDate() + 1);
+    }
+  } else {
+    dayKeys = Object.keys(byDay).sort();
+  }
+
+  const totalEvents = sorted.length;
+  const evLabel = totalEvents === 1 ? "1 evento" : `${totalEvents} eventi`;
+  const multiDay = dayKeys.length > 1;
+
+  const rows = dayKeys
+    .map((day) => {
+      const dayEvents = byDay[day];
+      const cnt = dayEvents.length;
+      const cntLabel = cnt === 0 ? "nessun evento" : cnt === 1 ? "1 evento" : `${cnt} eventi`;
+      const dayHeader = multiDay
+        ? `<div class="print-day-header">${formatDate(day)}<span class="print-day-count">${cntLabel}</span></div>`
+        : "";
+      const evRows = cnt === 0
+        ? `<div class="print-day-empty">Nessun evento</div>`
+        : dayEvents.map((e) => {
+        const color = getEventColor(e);
+        const timeLabel = e.all_day
+          ? "Tutto il giorno"
+          : e.start_time
+            ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
+            : "—";
+        const details = [
+          e.category_name ? `${e.category_icon} ${e.category_name}` : "",
+          e.location ? `📍 ${e.location}` : "",
+          e.end_date && e.end_date !== e.start_date
+            ? `fino al ${formatDateShort(e.end_date)}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join("  ·  ");
+
+        return `
+        <div class="print-event-row">
+          <div class="print-event-time">${timeLabel}</div>
+          <div class="print-event-dot" style="background:${color}"></div>
+          <div class="print-event-body">
+            <div class="print-event-title">${e.title}</div>
+            ${details ? `<div class="print-event-details">${details}</div>` : ""}
+            ${e.description ? `<div class="print-event-desc">${e.description}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+      return `<div class="print-day-group">${dayHeader}${evRows}</div>`;
     })
     .join("");
 
@@ -1068,7 +1105,7 @@ function buildPrintHTML(events, title, subtitle) {
     <div class="print-header">
       <div>
         <div class="print-title">◈ ${title}</div>
-        <div class="print-subtitle">${subtitle} · ${sorted.length} eventi</div>
+        <div class="print-subtitle">${subtitle} · ${evLabel}</div>
       </div>
       <div class="print-meta">Stampato il<br>${dateStr}</div>
     </div>
@@ -1077,9 +1114,9 @@ function buildPrintHTML(events, title, subtitle) {
   `;
 }
 
-function printEvents(events, title, subtitle) {
+function printEvents(events, title, subtitle, rangeFrom, rangeTo) {
   const frame = document.getElementById("printFrame");
-  frame.innerHTML = buildPrintHTML(events, title, subtitle);
+  frame.innerHTML = buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo);
   frame.classList.remove("hidden");
 
   // Aggiungi font per stampa
@@ -1300,7 +1337,7 @@ document.getElementById("btnPrintRange").addEventListener("click", () => {
   });
 
   const title = `${formatDateShort(from)} → ${formatDateShort(to)}`;
-  printEvents(filtered, title, "Agenda intervallo");
+  printEvents(filtered, title, "Agenda intervallo", from, to);
 });
 
 // Setup smart time inputs

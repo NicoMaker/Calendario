@@ -2331,3 +2331,46 @@ body {
   width: 100%;
   justify-content: center;
 }
+
+/* ── STAMPA GRUPPI PER GIORNO ──────────────────── */
+.print-day-group {
+  margin-bottom: 24px;
+}
+.print-day-header {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1614;
+  border-bottom: 2px solid #1a1614;
+  padding-bottom: 5px;
+  margin-bottom: 4px;
+  margin-top: 8px;
+}
+@media print {
+  .print-day-header {
+    break-after: avoid;
+  }
+  .print-day-group {
+    break-inside: avoid;
+  }
+}
+
+/* ── STAMPA: conteggio nel giorno e giorni vuoti ── */
+.print-day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.print-day-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #888;
+  margin-left: auto;
+}
+.print-day-empty {
+  font-size: 12px;
+  color: #bbb;
+  font-style: italic;
+  padding: 8px 0 4px 0;
+}
