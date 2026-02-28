@@ -1005,8 +1005,7 @@ async function deleteEvent(directId) {
 // ──────────────── STAMPA ────────────────
 function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
   const now = new Date();
-  const dateStr = now.toLocaleDateString("it-IT", {
-    weekday: "long",
+  const printedOn = now.toLocaleDateString("it-IT", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -1015,11 +1014,12 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
   if (!events.length && !rangeFrom) {
     return `
       <div class="print-header">
-        <div><div class="print-title">${title}</div><div class="print-subtitle">${subtitle}</div></div>
-        <div class="print-meta">Stampato il ${dateStr}</div>
+        <div class="print-brand">◈ Planner</div>
+        <div class="print-title">${title}</div>
+        <div class="print-subtitle">${subtitle}</div>
       </div>
       <div class="print-empty">Nessun evento da stampare.</div>
-      <div class="print-footer">◈ Planner — Calendario Personale</div>
+      <div class="print-footer"><span>◈ Planner — Calendario Personale</span><span>Stampato il ${printedOn}</span></div>
     `;
   }
 
@@ -1065,7 +1065,7 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
       const cnt = dayEvents.length;
       const cntLabel = cnt === 0 ? "nessun evento" : cnt === 1 ? "1 evento" : `${cnt} eventi`;
       const dayHeader = multiDay
-        ? `<div class="print-day-header">${formatDate(day)}<span class="print-day-count">${cntLabel}</span></div>`
+        ? `<div class="print-day-header"><span class="print-day-name">${formatDate(day)}</span><span class="print-day-count">${cntLabel}</span></div>`
         : "";
       const evRows = cnt === 0
         ? `<div class="print-day-empty">Nessun evento</div>`
@@ -1089,7 +1089,7 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
         return `
         <div class="print-event-row">
           <div class="print-event-time">${timeLabel}</div>
-          <div class="print-event-dot" style="background:${color}"></div>
+          <div class="print-event-bar" style="background:${color}"></div>
           <div class="print-event-body">
             <div class="print-event-title">${e.title}</div>
             ${details ? `<div class="print-event-details">${details}</div>` : ""}
@@ -1103,14 +1103,12 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
 
   return `
     <div class="print-header">
-      <div>
-        <div class="print-title">◈ ${title}</div>
-        <div class="print-subtitle">${subtitle} · ${evLabel}</div>
-      </div>
-      <div class="print-meta">Stampato il<br>${dateStr}</div>
+      <div class="print-brand">◈ Planner</div>
+      <div class="print-title">${title}</div>
+      <div class="print-subtitle">${subtitle} · ${evLabel}</div>
     </div>
     ${rows}
-    <div class="print-footer">◈ Planner — Calendario Personale</div>
+    <div class="print-footer"><span>◈ Planner — Calendario Personale</span><span>Stampato il ${printedOn}</span></div>
   `;
 }
 
