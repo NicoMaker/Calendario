@@ -1321,8 +1321,9 @@ body {
 }
 
 .tl-end {
-  font-size: 10px;
-  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -2156,8 +2157,6 @@ body {
 .btn-event-delete:hover {
   background: #e05555;
   color: #fff;
-  border-color: #e05555;
-}
   border-color: #e05555;
 }
 
