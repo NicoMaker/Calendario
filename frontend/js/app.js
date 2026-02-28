@@ -402,7 +402,9 @@ function renderCategoryList() {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const cat = state.categories.find((c) => c.id == btn.dataset.catId);
-      if (cat) openCatModal(cat);
+      if (!cat) return;
+      closeMobileDrawer();
+      setTimeout(() => openCatModal(cat), 350);
     });
   });
 
@@ -1180,7 +1182,7 @@ document
   .addEventListener("click", (e) => {
     e.stopPropagation();
     closeMobileDrawer();
-    setTimeout(() => openNewEventModal(), 50);
+    setTimeout(() => openNewEventModal(), 350);
   });
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("btnCancel").addEventListener("click", closeModal);
@@ -1463,7 +1465,7 @@ document
   .addEventListener("click", (e) => {
     e.stopPropagation();
     closeMobileDrawer();
-    setTimeout(() => openCatModal(), 50);
+    setTimeout(() => openCatModal(), 350);
   });
 document
   .getElementById("catModalClose")
