@@ -125,7 +125,8 @@ function getEventsForDay(dateStr) {
 }
 
 function getEventColor(event) {
-  const isBlank = (c) => !c || c === "#ffffff" || c === "#FFFFFF" || c === "white";
+  const isBlank = (c) =>
+    !c || c === "#ffffff" || c === "#FFFFFF" || c === "white";
   if (!isBlank(event.color)) return event.color;
   if (!isBlank(event.category_color)) return event.category_color;
   return "#6b6560";
@@ -438,12 +439,7 @@ function renderCategoryList() {
         );
         return;
       }
-      if (
-        !confirm(
-          `Eliminare la categoria "${cat.name}"?`,
-        )
-      )
-        return;
+      if (!confirm(`Eliminare la categoria "${cat.name}"?`)) return;
       const resp = await api("DELETE", `/categories/${cat.id}`);
       if (resp.success) {
         showToast("🗑 Categoria eliminata");
@@ -592,7 +588,9 @@ function renderWeek() {
             const allDay = e.all_day
               ? `<span class="week-ev-detail">Tutto il giorno</span>`
               : "";
-            const detailsRow = [cat, loc, timeTag, allDay].filter(Boolean).join("");
+            const detailsRow = [cat, loc, timeTag, allDay]
+              .filter(Boolean)
+              .join("");
             return `<div class="week-event-item" style="background:${color}" data-id="${e.id}">
               <div class="week-event-top">
                 <strong class="week-ev-title">${e.title}</strong>
@@ -609,7 +607,8 @@ function renderWeek() {
       : '<div class="week-empty">Nessun evento</div>';
 
     const evCount = dayEvents.length;
-    const evCountLabel = evCount === 1 ? "1 evento" : evCount > 1 ? `${evCount} eventi` : "";
+    const evCountLabel =
+      evCount === 1 ? "1 evento" : evCount > 1 ? `${evCount} eventi` : "";
 
     row.innerHTML = `
       <div class="week-day-header" data-date="${dateStr}" style="cursor:pointer">
@@ -680,8 +679,8 @@ function renderDay() {
   } else {
     sorted.forEach((e) => {
       const color = getEventColor(e);
-      const startLabel = e.all_day ? "—" : (e.start_time || "—");
-      const endLabel   = e.all_day ? "" : (e.end_time || "");
+      const startLabel = e.all_day ? "—" : e.start_time || "—";
+      const endLabel = e.all_day ? "" : e.end_time || "";
       html += `
         <div class="timeline-slot">
           <div class="timeline-hour">
@@ -1082,33 +1081,38 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
     .map((day) => {
       const dayEvents = byDay[day];
       const cnt = dayEvents.length;
-      const cntLabel = cnt === 0 ? "nessun evento" : cnt === 1 ? "1 evento" : `${cnt} eventi`;
+      const cntLabel =
+        cnt === 0 ? "nessun evento" : cnt === 1 ? "1 evento" : `${cnt} eventi`;
       const dayHeader = multiDay
         ? `<div class="print-day-header"><span class="print-day-name">${formatDate(day)}</span><span class="print-day-count">${cntLabel}</span></div>`
         : "";
-      const evRows = cnt === 0
-        ? `<div class="print-day-empty">Nessun evento</div>`
-        : dayEvents.map((e) => {
-        const color = getEventColor(e);
-        const timeLabel = e.all_day
-          ? "Tutto il giorno"
-          : e.start_time || "—";
-        const timeEndLabel = (!e.all_day && e.end_time) ? e.end_time : "";
-        const timeHTML = `<div class="print-event-time">
+      const evRows =
+        cnt === 0
+          ? `<div class="print-day-empty">Nessun evento</div>`
+          : dayEvents
+              .map((e) => {
+                const color = getEventColor(e);
+                const timeLabel = e.all_day
+                  ? "Tutto il giorno"
+                  : e.start_time || "—";
+                const timeEndLabel = !e.all_day && e.end_time ? e.end_time : "";
+                const timeHTML = `<div class="print-event-time">
           <span class="print-time-start">${timeLabel}</span>
           ${timeEndLabel ? `<span class="print-time-end">${timeEndLabel}</span>` : ""}
         </div>`;
-        const details = [
-          e.category_name ? `${e.category_icon} ${e.category_name}` : "",
-          e.location ? `📍 ${e.location}` : "",
-          e.end_date && e.end_date !== e.start_date
-            ? `fino al ${formatDateShort(e.end_date)}`
-            : "",
-        ]
-          .filter(Boolean)
-          .join("  ·  ");
+                const details = [
+                  e.category_name
+                    ? `${e.category_icon} ${e.category_name}`
+                    : "",
+                  e.location ? `📍 ${e.location}` : "",
+                  e.end_date && e.end_date !== e.start_date
+                    ? `fino al ${formatDateShort(e.end_date)}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join("  ·  ");
 
-        return `
+                return `
         <div class="print-event-row">
           ${timeHTML}
           <div class="print-event-bar" style="background:${color}"></div>
@@ -1118,7 +1122,8 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
             ${e.description ? `<div class="print-event-desc">${e.description}</div>` : ""}
           </div>
         </div>`;
-      }).join("");
+              })
+              .join("");
       return `<div class="print-day-group">${dayHeader}${evRows}</div>`;
     })
     .join("");
@@ -1345,9 +1350,15 @@ document.getElementById("printDatePicker").value = toDateStr(new Date());
 // Stampa intervallo giorni
 document.getElementById("btnPrintRange").addEventListener("click", () => {
   const from = document.getElementById("printRangeFrom").value;
-  const to   = document.getElementById("printRangeTo").value;
-  if (!from || !to) { showToast("⚠️ Scegli data inizio e fine!"); return; }
-  if (from > to)    { showToast("⚠️ La data di inizio deve essere prima della fine!"); return; }
+  const to = document.getElementById("printRangeTo").value;
+  if (!from || !to) {
+    showToast("⚠️ Scegli data inizio e fine!");
+    return;
+  }
+  if (from > to) {
+    showToast("⚠️ La data di inizio deve essere prima della fine!");
+    return;
+  }
 
   // Carica tutti gli eventi se necessario, poi filtra
   const allEvt = state.events;
@@ -1564,12 +1575,7 @@ async function deleteCat() {
     return;
   }
 
-  if (
-    !confirm(
-      `Eliminare la categoria "${name}"?`,
-    )
-  )
-    return;
+  if (!confirm(`Eliminare la categoria "${name}"?`)) return;
 
   const resp = await api("DELETE", `/categories/${id}`);
   if (resp.success) {
