@@ -67,7 +67,7 @@ body {
   overflow-y: auto;
   padding: 20px 20px 24px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 .sidebar-scroll::-webkit-scrollbar {
@@ -77,7 +77,7 @@ body {
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
 
@@ -109,7 +109,7 @@ body {
   padding: 20px 20px 16px;
   flex-shrink: 0;
   background: var(--bg-sidebar);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   z-index: 10;
 }
 
@@ -1598,7 +1598,7 @@ body {
   opacity: 1;
 }
 .cat-edit-btn {
-  opacity: 0;
+  opacity: 0.6;
   background: none;
   border: none;
   color: var(--text-sidebar-muted);
@@ -1936,7 +1936,7 @@ body {
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 4px;
-  opacity: 0;
+  opacity: 0.6;
   transition:
     opacity var(--transition),
     color var(--transition),
@@ -1955,7 +1955,10 @@ body {
 /* Mobile: always show delete btn */
 @media (max-width: 768px) {
   .cat-delete-btn {
-    opacity: 0.6;
+    opacity: 0.7;
+  }
+  .cat-edit-btn {
+    opacity: 0.7;
   }
 }
 
@@ -1963,8 +1966,8 @@ body {
 .mobile-topbar-x {
   width: 36px;
   height: 36px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   color: #e8e4dc;
   font-size: 16px;

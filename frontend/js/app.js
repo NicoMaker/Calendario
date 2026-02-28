@@ -54,7 +54,6 @@ function closeMobileDrawer() {
   if (mobileCloseBtn) mobileCloseBtn.classList.add("hidden");
 }
 
-
 // ──────────────── API HELPERS ────────────────
 async function api(method, path, body = null) {
   const opts = { method, headers: { "Content-Type": "application/json" } };
@@ -414,7 +413,12 @@ function renderCategoryList() {
       e.stopPropagation();
       const cat = state.categories.find((c) => c.id == btn.dataset.catId);
       if (!cat) return;
-      if (!confirm(`Eliminare la categoria "${cat.name}"?\nGli eventi associati rimarranno senza categoria.`)) return;
+      if (
+        !confirm(
+          `Eliminare la categoria "${cat.name}"?\nGli eventi associati rimarranno senza categoria.`,
+        )
+      )
+        return;
       const resp = await api("DELETE", `/categories/${cat.id}`);
       if (resp.success) {
         showToast("🗑 Categoria eliminata");
@@ -1177,13 +1181,11 @@ document.getElementById("btnToday").addEventListener("click", () => {
   if (state.view === "list") setView("day");
   else refresh();
 });
-document
-  .getElementById("btnNewEvent")
-  .addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeMobileDrawer();
-    setTimeout(() => openNewEventModal(), 350);
-  });
+document.getElementById("btnNewEvent").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeMobileDrawer();
+  setTimeout(() => openNewEventModal(), 350);
+});
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("btnCancel").addEventListener("click", closeModal);
 document.getElementById("btnSaveEvent").addEventListener("click", saveEvent);
@@ -1460,13 +1462,11 @@ async function deleteCat() {
 }
 
 // Event listeners categorie
-document
-  .getElementById("btnAddCategory")
-  .addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeMobileDrawer();
-    setTimeout(() => openCatModal(), 350);
-  });
+document.getElementById("btnAddCategory").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeMobileDrawer();
+  setTimeout(() => openCatModal(), 350);
+});
 document
   .getElementById("catModalClose")
   .addEventListener("click", closeCatModal);
