@@ -307,6 +307,17 @@ function renderCategoryList() {
     badge.classList.remove("hidden");
   }
 
+  // Filter categories by sidebar search
+  const sbSearch = document.getElementById("catSidebarSearch");
+  const sbQ = sbSearch ? sbSearch.value.toLowerCase() : "";
+  const filteredCats = sbQ
+    ? state.categories.filter(
+        (c) =>
+          c.name.toLowerCase().includes(sbQ) ||
+          (c.icon && c.icon.includes(sbQ)),
+      )
+    : state.categories;
+
   list.innerHTML = `
     <!-- TUTTE -->
     <li class="category-item cat-special ${isAll ? "active" : ""}" data-action="all">
@@ -324,7 +335,7 @@ function renderCategoryList() {
 
     <li class="cat-separator"></li>
 
-    ${state.categories
+    ${filteredCats
       .map((c) => {
         const isSelected = isAll
           ? true
@@ -422,6 +433,10 @@ function renderCategoryList() {
       const resp = await api("DELETE", `/categories/${cat.id}`);
       if (resp.success) {
         showToast("🗑 Categoria eliminata");
+        // Se l'evento aperto nel modal usava questa categoria → reset widget
+        if (document.getElementById("fCategory").value == cat.id) {
+          setCategorySearchValue(null);
+        }
         await refresh();
       } else {
         showToast("❌ " + resp.error);
@@ -429,15 +444,8 @@ function renderCategoryList() {
     });
   });
 
-  // Popola select nel modal evento
-  const select = document.getElementById("fCategory");
-  const prevVal = select.value;
-  select.innerHTML =
-    `<option value="">Nessuna</option>` +
-    state.categories
-      .map((c) => `<option value="${c.id}">${c.icon} ${c.name}</option>`)
-      .join("");
-  if (prevVal) select.value = prevVal;
+  // Aggiorna widget ricerca categoria nel modal evento
+  updateCatSearchWidget();
 }
 
 // Renderizza la vista corrente senza ricaricare dal server
@@ -886,7 +894,7 @@ function openEditEventModal(event) {
   document.getElementById("fStartTime").value = event.start_time || "";
   document.getElementById("fEndTime").value = event.end_time || "";
   document.getElementById("fLocation").value = event.location || "";
-  document.getElementById("fCategory").value = event.category_id || "";
+  setCategorySearchValue(event.category_id || null);
   // Usa il colore specifico dell'evento se esiste, altrimenti prende quello della categoria
   syncColorFromCategory(event.category_id);
   document.getElementById("fDescription").value = event.description || "";
@@ -906,6 +914,13 @@ function resetForm() {
   document.getElementById("fColor").value = "#ffffff";
   document.getElementById("timeRow").style.display = "";
   document.getElementById("endTimeHint").textContent = "";
+  // Reset category search widget
+  const catSearch = document.getElementById("fCategorySearch");
+  if (catSearch) catSearch.value = "";
+  const catHidden = document.getElementById("fCategory");
+  if (catHidden) catHidden.value = "";
+  const catClear = document.getElementById("catSearchClear");
+  if (catClear) catClear.classList.add("hidden");
 }
 
 function toggleTimeRow() {
@@ -1196,9 +1211,7 @@ document.getElementById("popupClose").addEventListener("click", closePopup);
 document.getElementById("fAllDay").addEventListener("change", toggleTimeRow);
 
 // Sincronizza colore evento con colore categoria selezionata
-document.getElementById("fCategory").addEventListener("change", function () {
-  syncColorFromCategory(this.value);
-});
+// fCategory change handled by cat search widget
 
 document.querySelectorAll(".view-btn").forEach((btn) => {
   btn.addEventListener("click", () => setView(btn.dataset.view));
@@ -1432,7 +1445,7 @@ async function saveCat() {
       await loadCategories();
       if (!id) {
         // preseleziona la nuova categoria appena creata
-        document.getElementById("fCategory").value = resp.data.id;
+        setCategorySearchValue(resp.data.id);
       }
     }
   } else {
@@ -1455,6 +1468,10 @@ async function deleteCat() {
   if (resp.success) {
     showToast("🗑 Categoria eliminata");
     closeCatModal();
+    // Se l'evento aperto nel modal usava questa categoria → reset widget
+    if (document.getElementById("fCategory").value == id) {
+      setCategorySearchValue(null);
+    }
     await refresh();
   } else {
     showToast("❌ " + resp.error);
@@ -1527,4 +1544,136 @@ document
     });
   };
   document.head.appendChild(script);
+})();
+
+// ══════════════════════════════════════════════
+//  CATEGORIA SEARCH WIDGET — sostituisce <select>
+// ══════════════════════════════════════════════
+
+(function initCatSearchWidget() {
+  const searchInput = document.getElementById("fCategorySearch");
+  const hiddenInput = document.getElementById("fCategory");
+  const dropdown = document.getElementById("catDropdown");
+  const clearBtn = document.getElementById("catSearchClear");
+
+  function renderDropdown(filter) {
+    const q = (filter || "").toLowerCase();
+    let items = state.categories.filter(
+      (c) =>
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        (c.icon && c.icon.includes(q)),
+    );
+
+    dropdown.innerHTML = "";
+
+    // Opzione "Nessuna" sempre in cima
+    const nessuna = document.createElement("div");
+    nessuna.className = "cat-option" + (!hiddenInput.value ? " selected" : "");
+    nessuna.innerHTML =
+      '<span class="cat-opt-dot" style="background:#d1d5db;border:1px dashed #9ca3af"></span><span class="cat-opt-name">Nessuna categoria</span>';
+    nessuna.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      selectCat(null, "");
+    });
+    dropdown.appendChild(nessuna);
+
+    if (!items.length && q) {
+      const empty = document.createElement("div");
+      empty.className = "cat-option cat-option-empty";
+      empty.textContent = "Nessun risultato";
+      dropdown.appendChild(empty);
+    }
+
+    items.forEach((c) => {
+      const el = document.createElement("div");
+      el.className =
+        "cat-option" +
+        (String(hiddenInput.value) === String(c.id) ? " selected" : "");
+      el.innerHTML = `<span class="cat-opt-dot" style="background:${c.color}"></span><span class="cat-opt-icon">${c.icon}</span><span class="cat-opt-name">${c.name}</span>`;
+      el.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        selectCat(c.id, c.icon + " " + c.name);
+      });
+      dropdown.appendChild(el);
+    });
+
+    dropdown.classList.remove("hidden");
+  }
+
+  function selectCat(id, label) {
+    hiddenInput.value = id || "";
+    searchInput.value = label || "";
+    syncColorFromCategory(id);
+    dropdown.classList.add("hidden");
+    clearBtn.classList.toggle("hidden", !id);
+  }
+
+  searchInput.addEventListener("focus", () =>
+    renderDropdown(searchInput.value),
+  );
+  searchInput.addEventListener("input", () =>
+    renderDropdown(searchInput.value),
+  );
+  searchInput.addEventListener("blur", () => {
+    // piccolo delay per permettere i mousedown
+    setTimeout(() => dropdown.classList.add("hidden"), 150);
+    // Se il testo non corrisponde a nessuna categoria, resetta
+    const match = state.categories.find(
+      (c) => searchInput.value === c.icon + " " + c.name,
+    );
+    if (
+      !match &&
+      searchInput.value !== "" &&
+      searchInput.value !== "Nessuna categoria"
+    ) {
+      const current = state.categories.find(
+        (c) => String(c.id) === String(hiddenInput.value),
+      );
+      searchInput.value = current ? current.icon + " " + current.name : "";
+    }
+    if (searchInput.value === "Nessuna categoria") searchInput.value = "";
+  });
+
+  clearBtn.addEventListener("click", () => selectCat(null, ""));
+})();
+
+// Chiamata da renderCategoryList e openEditEventModal per aggiornare il widget
+function updateCatSearchWidget() {
+  const hiddenInput = document.getElementById("fCategory");
+  const searchInput = document.getElementById("fCategorySearch");
+  if (!searchInput) return;
+  const current = state.categories.find(
+    (c) => String(c.id) === String(hiddenInput.value),
+  );
+  if (current) {
+    searchInput.value = current.icon + " " + current.name;
+    document.getElementById("catSearchClear").classList.remove("hidden");
+  } else {
+    searchInput.value = "";
+    document.getElementById("catSearchClear").classList.add("hidden");
+  }
+}
+
+// Imposta categoria nel widget (usato da openEditEventModal e saveCat)
+function setCategorySearchValue(id) {
+  const hiddenInput = document.getElementById("fCategory");
+  const searchInput = document.getElementById("fCategorySearch");
+  const clearBtn = document.getElementById("catSearchClear");
+  hiddenInput.value = id || "";
+  const cat = id
+    ? state.categories.find((c) => String(c.id) === String(id))
+    : null;
+  searchInput.value = cat ? cat.icon + " " + cat.name : "";
+  clearBtn.classList.toggle("hidden", !id);
+  syncColorFromCategory(id);
+}
+
+// ── SIDEBAR CATEGORY SEARCH ──────────────────
+(function initCatSidebarSearch() {
+  const input = document.getElementById("catSidebarSearch");
+  if (!input) return;
+  input.addEventListener("input", () => {
+    renderCategoryList();
+  });
 })();

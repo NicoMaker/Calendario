@@ -2091,3 +2091,193 @@ body {
   margin-top: 8px;
   padding-left: 64px;
 }
+
+/* ── CATEGORIA SEARCH WIDGET ─────────────────── */
+.cat-search-wrap {
+  position: relative;
+}
+
+.cat-search-wrap input[type="text"] {
+  padding-right: 28px;
+}
+
+.cat-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1;
+  user-select: none;
+  transition: color 0.15s;
+}
+.cat-search-clear:hover {
+  color: var(--text);
+}
+
+.cat-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s;
+  color: var(--text);
+}
+.cat-option:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.05));
+}
+.cat-option.selected {
+  background: var(--accent-soft, rgba(99, 102, 241, 0.1));
+}
+.cat-option.cat-option-empty {
+  color: var(--text-light);
+  font-style: italic;
+  cursor: default;
+  justify-content: center;
+}
+
+.cat-opt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cat-opt-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+.cat-opt-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── SIDEBAR CATEGORY SEARCH ─────────────────── */
+.cat-sidebar-search-wrap {
+  position: relative;
+  margin: 6px 0 10px 0;
+}
+
+.cat-sidebar-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 30px 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.cat-sidebar-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+.cat-sidebar-search::placeholder {
+  color: var(--text-light);
+}
+
+.cat-sidebar-search-icon {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ── CAT DROPDOWN — fix overlap issue ───────── */
+.cat-search-wrap {
+  position: relative;
+  z-index: 10;
+}
+
+/* Make form-group that contains the dropdown not clip it */
+.form-group:has(.cat-search-wrap) {
+  overflow: visible;
+}
+.form-row:has(.cat-search-wrap) {
+  overflow: visible;
+}
+.modal-body {
+  overflow: visible !important;
+}
+
+/* ── CAT OPTION IMPROVED ─────────────────────── */
+.cat-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+  color: var(--text);
+}
+.cat-option:hover {
+  background: var(--surface-hover, rgba(100, 100, 100, 0.08));
+}
+.cat-option.selected {
+  background: rgba(99, 102, 241, 0.12);
+  font-weight: 500;
+}
+.cat-option.selected::after {
+  content: "✓";
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 12px;
+}
+.cat-option.cat-option-empty {
+  color: var(--text-light);
+  font-style: italic;
+  cursor: default;
+  justify-content: center;
+}
+.cat-opt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cat-opt-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+.cat-opt-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── CAT DROPDOWN — sfondo solido garantito ─── */
+.cat-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #faf8f4;
+  background: var(--bg-card, #faf8f4);
+  border: 1px solid #e5e0d8;
+  border: 1px solid var(--border, #e5e0d8);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  z-index: 10000;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  /* Forza opacità piena — nessuna trasparenza */
+  opacity: 1 !important;
+}

@@ -45,6 +45,16 @@
               +
             </button>
           </div>
+          <div class="cat-sidebar-search-wrap">
+            <input
+              type="text"
+              id="catSidebarSearch"
+              class="cat-sidebar-search"
+              placeholder="Cerca..."
+              autocomplete="off"
+            />
+            <span class="cat-sidebar-search-icon">⌕</span>
+          </div>
           <ul class="category-list" id="categoryList"></ul>
         </div>
 
@@ -217,7 +227,7 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group">
+              <div class="form-group" style="position: relative">
                 <label
                   >Categoria
                   <button
@@ -228,9 +238,19 @@
                     + nuova
                   </button>
                 </label>
-                <select id="fCategory">
-                  <option value="">Nessuna</option>
-                </select>
+                <div class="cat-search-wrap" id="catSearchWrap">
+                  <input
+                    type="text"
+                    id="fCategorySearch"
+                    placeholder="Cerca categoria..."
+                    autocomplete="off"
+                  />
+                  <span class="cat-search-clear hidden" id="catSearchClear"
+                    >✕</span
+                  >
+                  <div class="cat-dropdown hidden" id="catDropdown"></div>
+                </div>
+                <input type="hidden" id="fCategory" value="" />
               </div>
               <input type="hidden" id="fColor" value="#ffffff" />
             </div>
