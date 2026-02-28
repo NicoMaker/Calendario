@@ -42,6 +42,19 @@ const DAYS_IT = [
 ];
 const DAYS_SHORT = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
+// ──────────────── MOBILE DRAWER HELPER (globale) ────────────────
+function closeMobileDrawer() {
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("mobileOverlay");
+  const menuBtn = document.getElementById("btnMobileMenu");
+  const mobileCloseBtn = document.getElementById("btnMobileClose");
+  if (sidebar) sidebar.classList.remove("open");
+  if (overlay) overlay.classList.add("hidden");
+  if (menuBtn) menuBtn.classList.remove("open");
+  if (mobileCloseBtn) mobileCloseBtn.classList.add("hidden");
+}
+
+
 // ──────────────── API HELPERS ────────────────
 async function api(method, path, body = null) {
   const opts = { method, headers: { "Content-Type": "application/json" } };
@@ -1164,7 +1177,11 @@ document.getElementById("btnToday").addEventListener("click", () => {
 });
 document
   .getElementById("btnNewEvent")
-  .addEventListener("click", () => openNewEventModal());
+  .addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeMobileDrawer();
+    setTimeout(() => openNewEventModal(), 50);
+  });
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("btnCancel").addEventListener("click", closeModal);
 document.getElementById("btnSaveEvent").addEventListener("click", saveEvent);
@@ -1268,8 +1285,7 @@ setupTimeInputs();
     if (window.innerWidth > 768) return;
     const isMiniDay = e.target.closest(".mini-day[data-date]");
     const isViewBtn = e.target.closest(".view-btn");
-    const isNewEvent = e.target.closest(".btn-new-event");
-    if (isMiniDay || isViewBtn || isNewEvent) {
+    if (isMiniDay || isViewBtn) {
       setTimeout(closeDrawer, 120);
     }
   });
@@ -1444,7 +1460,11 @@ async function deleteCat() {
 // Event listeners categorie
 document
   .getElementById("btnAddCategory")
-  .addEventListener("click", () => openCatModal());
+  .addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeMobileDrawer();
+    setTimeout(() => openCatModal(), 50);
+  });
 document
   .getElementById("catModalClose")
   .addEventListener("click", closeCatModal);
