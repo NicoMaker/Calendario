@@ -6,7 +6,6 @@ const { Server } = require("socket.io");
 const os = require("os");
 
 const { initDB } = require("./db/database");
-const { seedFakeData } = require("./db/seed");
 const pageRoutes = require("./routes/pages");
 const eventsApi = require("./api/events");
 const categoriesApi = require("./api/categories");
@@ -51,15 +50,6 @@ app.use((req, res, next) => {
 // ── Database ──────────────────────────────────
 console.log("🗄️  Inizializzazione database...");
 const db = initDB();
-
-if (process.env.SEED === "true") {
-  console.log("🌱 Modalità DEV_DATI — inserimento dati fittizi...");
-  seedFakeData(db);
-} else {
-  console.log(
-    "⚪ Modalità DEV — database vuoto (usa npm run dev_dati per i dati fittizi)",
-  );
-}
 
 app.locals.db = db;
 
@@ -148,9 +138,8 @@ async function getPublicIP() {
 server.listen(PORT, "0.0.0.0", async () => {
   const localIP = getLocalIP();
   const publicIP = await getPublicIP();
-  const mode = process.env.SEED === "true" ? "🌱 con dati fittizi" : "⚪ vuoto";
 
-  console.log(`\n🗓️  Calendario avviato  [${mode}]`);
+  console.log(`\n🗓️  Calendario avviato`);
   console.log(`   Localhost  : http://localhost:${PORT}`);
   console.log(`   Rete locale: http://${localIP}:${PORT}`);
   if (publicIP) console.log(`   IP Pubblico: http://${publicIP}:${PORT}`);

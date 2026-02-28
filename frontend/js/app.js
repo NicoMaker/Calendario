@@ -78,6 +78,9 @@ async function loadCategories() {
   const resp = await api("GET", "/categories");
   if (resp.success) {
     state.categories = resp.data;
+    // Aggiorna subito il badge con il numero reale di categorie
+    const usedBadge = document.getElementById("catUsedBadge");
+    if (usedBadge) usedBadge.textContent = state.categories.length;
     renderCategoryList();
   }
 }
@@ -295,6 +298,10 @@ function renderCategoryList() {
     state.searchResults !== null ? state.searchResults : state.events;
   const visibleEvents = filterEvents(allEvSrc);
 
+  // Aggiorna badge: numero totale di categorie create
+  const usedBadge = document.getElementById("catUsedBadge");
+  if (usedBadge) usedBadge.textContent = state.categories.length;
+
   // Aggiorna badge filtro attivo
   const badge = document.getElementById("catFilterBadge");
   if (f === null) {
@@ -424,9 +431,15 @@ function renderCategoryList() {
       e.stopPropagation();
       const cat = state.categories.find((c) => c.id == btn.dataset.catId);
       if (!cat) return;
+      if (cat.event_count > 0) {
+        showToast(
+          `⚠️ Impossibile eliminare "${cat.name}": ha ${cat.event_count} event${cat.event_count === 1 ? "o" : "i"} collegat${cat.event_count === 1 ? "o" : "i"}.`,
+        );
+        return;
+      }
       if (
         !confirm(
-          `Eliminare la categoria "${cat.name}"?\nGli eventi associati rimarranno senza categoria.`,
+          `Eliminare la categoria "${cat.name}"?`,
         )
       )
         return;
@@ -1457,9 +1470,19 @@ async function deleteCat() {
   const id = document.getElementById("catId").value;
   const name = document.getElementById("cName").value;
   if (!id) return;
+
+  // Controlla se la categoria ha eventi
+  const cat = state.categories.find((c) => String(c.id) === String(id));
+  if (cat && cat.event_count > 0) {
+    showToast(
+      `⚠️ Impossibile eliminare "${name}": ha ${cat.event_count} event${cat.event_count === 1 ? "o" : "i"} collegat${cat.event_count === 1 ? "o" : "i"}.`,
+    );
+    return;
+  }
+
   if (
     !confirm(
-      `Eliminare la categoria "${name}"?\nGli eventi associati rimarranno senza categoria.`,
+      `Eliminare la categoria "${name}"?`,
     )
   )
     return;

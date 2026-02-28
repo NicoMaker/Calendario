@@ -101,6 +101,18 @@ router.put("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   const db = req.app.locals.db;
   const io = req.app.get("io");
+
+  // Controlla se la categoria ha eventi collegati
+  const eventCount = db
+    .prepare("SELECT COUNT(*) as count FROM events WHERE category_id = ?")
+    .get(Number(req.params.id));
+  if (eventCount && eventCount.count > 0) {
+    return res.status(409).json({
+      success: false,
+      error: `Impossibile eliminare: ${eventCount.count} event${eventCount.count === 1 ? "o" : "i"} collegat${eventCount.count === 1 ? "o" : "i"} a questa categoria.`,
+    });
+  }
+
   const result = db
     .prepare("DELETE FROM categories WHERE id = ?")
     .run(Number(req.params.id));
