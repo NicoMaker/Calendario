@@ -1276,6 +1276,33 @@ document.getElementById("btnPrintCustomDay").addEventListener("click", () => {
 // Pre-imposta data picker al giorno corrente
 document.getElementById("printDatePicker").value = toDateStr(new Date());
 
+// Pre-imposta intervallo stampa (oggi → oggi+6)
+(function initPrintRange() {
+  const today = new Date();
+  const weekLater = new Date(today);
+  weekLater.setDate(weekLater.getDate() + 6);
+  document.getElementById("printRangeFrom").value = toDateStr(today);
+  document.getElementById("printRangeTo").value = toDateStr(weekLater);
+})();
+
+// Stampa intervallo giorni
+document.getElementById("btnPrintRange").addEventListener("click", () => {
+  const from = document.getElementById("printRangeFrom").value;
+  const to   = document.getElementById("printRangeTo").value;
+  if (!from || !to) { showToast("⚠️ Scegli data inizio e fine!"); return; }
+  if (from > to)    { showToast("⚠️ La data di inizio deve essere prima della fine!"); return; }
+
+  // Carica tutti gli eventi se necessario, poi filtra
+  const allEvt = state.events;
+  const filtered = allEvt.filter((e) => {
+    const eEnd = e.end_date || e.start_date;
+    return e.start_date <= to && eEnd >= from;
+  });
+
+  const title = `${formatDateShort(from)} → ${formatDateShort(to)}`;
+  printEvents(filtered, title, "Agenda intervallo");
+});
+
 // Setup smart time inputs
 setupTimeInputs();
 
