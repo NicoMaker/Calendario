@@ -28,53 +28,55 @@
         </button>
       </div>
 
-      <div class="mini-cal" id="miniCal"></div>
+      <div class="sidebar-scroll">
+        <div class="mini-cal" id="miniCal"></div>
 
-      <div class="sidebar-section">
-        <div class="sidebar-label-row">
-          <p class="sidebar-label">
-            Categorie
-            <span id="catFilterBadge" class="cat-filter-badge hidden"></span>
-          </p>
-          <button
-            class="btn-add-cat"
-            id="btnAddCategory"
-            title="Nuova categoria"
-          >
-            +
+        <div class="sidebar-section">
+          <div class="sidebar-label-row">
+            <p class="sidebar-label">
+              Categorie
+              <span id="catFilterBadge" class="cat-filter-badge hidden"></span>
+            </p>
+            <button
+              class="btn-add-cat"
+              id="btnAddCategory"
+              title="Nuova categoria"
+            >
+              +
+            </button>
+          </div>
+          <ul class="category-list" id="categoryList"></ul>
+        </div>
+
+        <div class="sidebar-section">
+          <button class="btn-new-event" id="btnNewEvent">
+            <span>+</span> Nuovo evento
           </button>
         </div>
-        <ul class="category-list" id="categoryList"></ul>
-      </div>
 
-      <div class="sidebar-section">
-        <button class="btn-new-event" id="btnNewEvent">
-          <span>+</span> Nuovo evento
-        </button>
-      </div>
+        <div class="sidebar-bottom">
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="month">Mese</button>
+            <button class="view-btn" data-view="week">Sett.</button>
+            <button class="view-btn" data-view="day">Giorno</button>
+            <button class="view-btn" data-view="list">Lista</button>
+          </div>
 
-      <div class="sidebar-bottom">
-        <div class="view-toggle">
-          <button class="view-btn active" data-view="month">Mese</button>
-          <button class="view-btn" data-view="week">Sett.</button>
-          <button class="view-btn" data-view="day">Giorno</button>
-          <button class="view-btn" data-view="list">Lista</button>
-        </div>
-
-        <div class="print-section">
-          <p class="sidebar-label" style="margin-top: 18px; margin-bottom: 8px">
-            🖨 Stampa
-          </p>
-          <div class="print-controls">
-            <button class="btn-print" id="btnPrintDay">
-              📅 Giorno corrente
-            </button>
-            <button class="btn-print hidden" id="btnPrintSearch">
-              🔍 Risultati ricerca
-            </button>
-            <div class="print-date-row">
-              <input type="date" id="printDatePicker" />
-              <button class="btn-print-go" id="btnPrintCustomDay">→</button>
+          <div class="print-section">
+            <p class="sidebar-label" style="margin-top: 18px; margin-bottom: 8px">
+              🖨 Stampa
+            </p>
+            <div class="print-controls">
+              <button class="btn-print" id="btnPrintDay">
+                📅 Giorno corrente
+              </button>
+              <button class="btn-print hidden" id="btnPrintSearch">
+                🔍 Risultati ricerca
+              </button>
+              <div class="print-date-row">
+                <input type="date" id="printDatePicker" />
+                <button class="btn-print-go" id="btnPrintCustomDay">→</button>
+              </div>
             </div>
           </div>
         </div>
