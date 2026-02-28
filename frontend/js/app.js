@@ -125,9 +125,10 @@ function getEventsForDay(dateStr) {
 }
 
 function getEventColor(event) {
-  if (event.color) return event.color;
-  if (event.category_color) return event.category_color;
-  return "#6366f1";
+  const isBlank = (c) => !c || c === "#ffffff" || c === "#FFFFFF" || c === "white";
+  if (!isBlank(event.color)) return event.color;
+  if (!isBlank(event.category_color)) return event.category_color;
+  return "#6b6560";
 }
 
 // Applica filtro categorie agli eventi
