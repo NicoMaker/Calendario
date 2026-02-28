@@ -330,7 +330,7 @@ function renderCategoryList() {
     <li class="category-item cat-special ${isAll ? "active" : ""}" data-action="all">
       <span class="cat-dot" style="background:linear-gradient(135deg,#6b6560,#9c9590)"></span>
       <span class="cat-name">Tutte</span>
-      <span class="cat-count">${allEvSrc.length}</span>
+      <span class="cat-count"></span>
     </li>
 
     <!-- NESSUNA -->
