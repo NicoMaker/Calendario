@@ -576,27 +576,45 @@ function renderWeek() {
             const time = e.start_time
               ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
               : "";
+            const cat = e.category_name
+              ? `<span class="week-ev-detail">${e.category_icon || "📌"} ${e.category_name}</span>`
+              : "";
+            const loc = e.location
+              ? `<span class="week-ev-detail">📍 ${e.location}</span>`
+              : "";
+            const timeTag = time
+              ? `<span class="week-ev-detail">🕐 ${time}</span>`
+              : "";
+            const desc = e.description
+              ? `<div class="week-ev-desc">${e.description}</div>`
+              : "";
+            const allDay = e.all_day
+              ? `<span class="week-ev-detail">Tutto il giorno</span>`
+              : "";
+            const detailsRow = [cat, loc, timeTag, allDay].filter(Boolean).join("");
             return `<div class="week-event-item" style="background:${color}" data-id="${e.id}">
-            <div class="week-event-top">
-              <span>${e.category_icon || "📌"}</span>
-              <strong style="flex:1">${e.title}</strong>
-              ${time ? `<span style="opacity:.7;font-size:10px">${time}</span>` : ""}
-            </div>
-            ${e.description ? `<div style="font-size:10px;opacity:.8;font-style:italic;margin-top:3px">${e.description}</div>` : ""}
-            <div class="week-event-actions">
-              <button class="btn-week-edit" data-id="${e.id}">✏ Modifica</button>
-              <button class="btn-week-delete" data-id="${e.id}">🗑 Elimina</button>
-            </div>
-          </div>`;
+              <div class="week-event-top">
+                <strong class="week-ev-title">${e.title}</strong>
+              </div>
+              ${detailsRow ? `<div class="week-ev-details">${detailsRow}</div>` : ""}
+              ${desc}
+              <div class="week-event-actions">
+                <button class="btn-week-edit" data-id="${e.id}">✏ Modifica</button>
+                <button class="btn-week-delete" data-id="${e.id}">🗑 Elimina</button>
+              </div>
+            </div>`;
           })
           .join("")
       : '<div class="week-empty">Nessun evento</div>';
+
+    const evCount = dayEvents.length;
+    const evCountLabel = evCount === 1 ? "1 evento" : evCount > 1 ? `${evCount} eventi` : "";
 
     row.innerHTML = `
       <div class="week-day-header" data-date="${dateStr}" style="cursor:pointer">
         <span class="week-day-name">${DAYS_SHORT[i]}</span>
         <span class="week-day-num ${isT ? "today" : ""}">${day.getDate()}</span>
-        <span style="font-size:11px;color:var(--text-light);margin-left:auto">${dayEvents.length ? dayEvents.length + " eventi" : ""}</span>
+        <span style="font-size:11px;color:var(--text-light);margin-left:auto">${evCountLabel}</span>
       </div>
       <div class="week-day-events">${evHtml}</div>
     `;
@@ -661,14 +679,14 @@ function renderDay() {
   } else {
     sorted.forEach((e) => {
       const color = getEventColor(e);
-      const timeLabel = e.all_day
-        ? "Tutto il giorno"
-        : e.start_time
-          ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
-          : "Orario non specificato";
+      const startLabel = e.all_day ? "—" : (e.start_time || "—");
+      const endLabel   = e.all_day ? "" : (e.end_time || "");
       html += `
         <div class="timeline-slot">
-          <div class="timeline-hour">${e.all_day ? "—" : e.start_time || "—"}</div>
+          <div class="timeline-hour">
+            <span class="tl-start">${startLabel}</span>
+            ${endLabel ? `<span class="tl-end">${endLabel}</span>` : ""}
+          </div>
           <div class="timeline-line">
             <div class="timeline-dot" style="border-color:${color};background:${color}20"></div>
             <div class="timeline-track"></div>
@@ -678,14 +696,14 @@ function renderDay() {
             <div class="day-event-body">
               <div class="day-event-title">${e.title}</div>
               <div class="day-event-meta">
-                <span>🕐 ${timeLabel}</span>
                 ${e.location ? `<span>📍 ${e.location}</span>` : ""}
                 ${e.category_name ? `<span style="color:${color}">${e.category_name}</span>` : ""}
+                ${e.all_day ? `<span>Tutto il giorno</span>` : ""}
               </div>
               ${e.description ? `<div class="event-description-inline">${e.description}</div>` : ""}
               <div class="event-actions">
-                <button class="btn-event-edit" data-id="${e.id}">✏ Modifica</button>
-                <button class="btn-event-delete" data-id="${e.id}">🗑 Elimina</button>
+                <button class="btn-event-edit" data-id="${e.id}" style="--ev-color:${color}">✏ Modifica</button>
+                <button class="btn-event-delete" data-id="${e.id}" style="--ev-color:${color}">🗑 Elimina</button>
               </div>
             </div>
           </div>
@@ -1073,9 +1091,12 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
         const color = getEventColor(e);
         const timeLabel = e.all_day
           ? "Tutto il giorno"
-          : e.start_time
-            ? `${e.start_time}${e.end_time ? " – " + e.end_time : ""}`
-            : "—";
+          : e.start_time || "—";
+        const timeEndLabel = (!e.all_day && e.end_time) ? e.end_time : "";
+        const timeHTML = `<div class="print-event-time">
+          <span class="print-time-start">${timeLabel}</span>
+          ${timeEndLabel ? `<span class="print-time-end">${timeEndLabel}</span>` : ""}
+        </div>`;
         const details = [
           e.category_name ? `${e.category_icon} ${e.category_name}` : "",
           e.location ? `📍 ${e.location}` : "",
@@ -1088,7 +1109,7 @@ function buildPrintHTML(events, title, subtitle, rangeFrom, rangeTo) {
 
         return `
         <div class="print-event-row">
-          <div class="print-event-time">${timeLabel}</div>
+          ${timeHTML}
           <div class="print-event-bar" style="background:${color}"></div>
           <div class="print-event-body">
             <div class="print-event-title">${e.title}</div>
