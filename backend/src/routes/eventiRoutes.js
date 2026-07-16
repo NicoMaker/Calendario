@@ -1,0 +1,10 @@
+const express = require("express");
+const c = require("../controllers/eventiController");
+const { catchErrors } = require("../middleware/errorHandler");
+const router = express.Router();
+router.get("/", catchErrors(c.lista));
+router.get("/:id", catchErrors(c.dettaglio));
+router.post("/", catchErrors(c.crea));
+router.put("/:id", catchErrors(c.aggiorna));
+router.delete("/:id", catchErrors(c.elimina));
+module.exports = router;

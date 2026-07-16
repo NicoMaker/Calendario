@@ -1,7 +1,7 @@
 {
   "name": "calendario",
-  "version": "2.0.0",
-  "description": "Calendario personale con Node.js + Express + SQLite nativo + Socket.IO",
+  "version": "3.0.0",
+  "description": "Calendario personale con Node.js + Express + SQLite nativo + Socket.IO — architettura a componenti",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

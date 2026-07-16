@@ -1,138 +1,21 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
+// Entry point: inizializza DB e Socket.IO, avvia il server HTTP
 const http = require("http");
-const { Server } = require("socket.io");
-const os = require("os");
-
-const { initDB } = require("./db/database");
-const pageRoutes = require("./routes/pages");
-const eventsApi = require("./api/events");
-const categoriesApi = require("./api/categories");
+const creaApp = require("./src/app");
+const { initDatabase } = require("./src/config/schema");
+const { db } = require("./src/config/database");
+const realtime = require("./src/realtime/socket");
+const { getLocalIP, getPublicIP } = require("./src/utils/network");
 
 const PORT = process.env.PORT || 3000;
-const app = express();
-
-// ── HTTP server + Socket.IO ───────────────────
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"], credentials: true },
-  transports: ["websocket", "polling"],
-  allowEIO3: true,
-  pingTimeout: 60000,
-  pingInterval: 25000,
-});
-
-app.set("io", io);
-
-// ── Middleware ────────────────────────────────
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../frontend")));
-
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api")) {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  }
-  next();
-});
 
 // ── Database ──────────────────────────────────
 console.log("🗄️  Inizializzazione database...");
-const db = initDB();
+initDatabase();
 
-app.locals.db = db;
-
-// ── Routes ────────────────────────────────────
-app.use("/", pageRoutes);
-app.use("/api/events", eventsApi);
-app.use("/api/categories", categoriesApi);
-
-// ── Health check ──────────────────────────────
-app.get("/api/health", async (req, res) => {
-  const publicIP = await getPublicIP();
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()),
-    socketConnections: io.engine.clientsCount,
-    publicIP,
-    port: PORT,
-  });
-});
-
-// ── SPA fallback ──────────────────────────────
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/api"))
-    return res.status(404).json({ error: "Endpoint non trovato" });
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ── Error middleware ──────────────────────────
-app.use((err, req, res, next) => {
-  console.error("Errore server:", err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || "Errore interno del server",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ── Socket.IO events ──────────────────────────
-io.on("connection", (socket) => {
-  console.log(`🔌 Client connesso: ${socket.id}`);
-  socket.emit("connected", {
-    message: "Connesso al calendario",
-    timestamp: new Date().toISOString(),
-  });
-  socket.on("disconnect", (reason) =>
-    console.log(`🔌 Client disconnesso: ${socket.id} — ${reason}`),
-  );
-  socket.on("ping", () =>
-    socket.emit("pong", { timestamp: new Date().toISOString() }),
-  );
-});
-
-// ── IP utilities ──────────────────────────────
-function getLocalIP() {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces))
-    for (const iface of interfaces[name])
-      if (iface.family === "IPv4" && !iface.internal) return iface.address;
-  return "localhost";
-}
-
-async function getPublicIP() {
-  try {
-    const https = require("https");
-    return new Promise((resolve) => {
-      https
-        .get("https://api.ipify.org?format=json", (res) => {
-          let data = "";
-          res.on("data", (c) => (data += c));
-          res.on("end", () => {
-            try {
-              resolve(JSON.parse(data).ip);
-            } catch {
-              resolve(null);
-            }
-          });
-        })
-        .on("error", () => resolve(null));
-    });
-  } catch {
-    return null;
-  }
-}
+// ── App + HTTP server + Socket.IO ─────────────
+const app = creaApp({ port: PORT });
+const server = http.createServer(app);
+realtime.init(server);
 
 // ── Avvio server ──────────────────────────────
 server.listen(PORT, "0.0.0.0", async () => {
@@ -177,7 +60,7 @@ function gracefulShutdown(signal) {
 
   server.close(() => {
     console.log("✅ Server HTTP chiuso.");
-    io.close(() => {
+    realtime.close(() => {
       console.log("✅ Socket.IO chiuso.");
       try {
         db.close();
@@ -206,4 +89,4 @@ process.on("unhandledRejection", (reason) =>
   console.error("❌ UnhandledRejection:", reason),
 );
 
-module.exports = { app, server, io };
+module.exports = { app, server };
